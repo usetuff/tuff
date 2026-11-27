@@ -540,7 +540,9 @@ if (existsSync(join(client, 'index.html'))) {
      own provider's name goes beside them — `providersMeta`. */
   const waysOf = providersMeta
   const ways = waysOf(offeredProviders())
-  const withWays = (html: string, said = ways) => html.replace('</head>', `${said}</head>`)
+  /* By a function: a replacement string reads `$&`, `` $` `` and `$'`, and a
+     provider's name (`OIDC_NAME`) is the server's owner's to write. */
+  const withWays = (html: string, said = ways) => html.replace('</head>', () => `${said}</head>`)
   /* The app's page as a workspace's own domain writes it — `cloud/domains/hosts.ts`. */
   /* Read once, as the page's hashes above were: a deploy is a new process. */
   const hostHtml = withWays(page)
@@ -580,7 +582,7 @@ if (existsSync(join(client, 'index.html'))) {
       const said: string[] = []
       if (!(await mailOn().catch(() => true))) said.push('<meta name="tuff-mail" content="off" />')
       if (env.setupToken && !(await serverClaimed().catch(() => true))) said.push('<meta name="tuff-setup" content="open" />')
-      if (said.length) page = page.replace('</head>', `${said.join('')}</head>`)
+      if (said.length) page = page.replace('</head>', () => `${said.join('')}</head>`)
     }
     /* Your own server with sign-up closed says so in the page, so the
        sign-up screen opens on the sentence rather than on a form it would

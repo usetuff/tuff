@@ -292,7 +292,7 @@ async function bringPictures(
     const had = known.get(f.url)
     if (had) {
       sources.set(had, f.url)
-      out = out.replace(f.whole, `\n\n![${f.alt || 'Picture'}](file:${had})\n\n`)
+      out = out.replace(f.whole, () => `\n\n![${f.alt || 'Picture'}](file:${had})\n\n`)
       continue
     }
     if (!fetch_) continue
@@ -315,7 +315,7 @@ async function bringPictures(
     if (!r.ok) continue
     const { id } = (await r.json()) as { id: string }
     sources.set(id, f.url)
-    out = out.replace(f.whole, `\n\n![${name}](file:${id})\n\n`)
+    out = out.replace(f.whole, () => `\n\n![${name}](file:${id})\n\n`)
   }
   return { text: out, sources }
 }

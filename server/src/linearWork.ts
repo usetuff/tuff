@@ -104,7 +104,7 @@ async function withFiles(key: string, put: (file: File) => Promise<string | null
     if (!got) continue
     const file = fileOf(got.bytes, got.type, m[1] || got.name)
     const id = await put(file)
-    if (id) out = out.replace(m[0], `\n\n![${file.name}](file:${id})\n\n`)
+    if (id) out = out.replace(m[0], () => `\n\n![${file.name}](file:${id})\n\n`)
   }
   return out
 }
