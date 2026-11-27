@@ -46,6 +46,18 @@ export async function mayWatch(ctx: AuthContext, projectId: string): Promise<boo
 const HOMES = new Set(['task', 'post', 'file', 'message', 'conversation', 'project'])
 
 /**
+ * Whether a session made on a workspace's own domain hears one word on
+ * `/ws/me`: only a word said in its own workspace. Its person is in others,
+ * which a session bound to this one is never in (the eighth audit); a plain session hears them all, being the person. By
+ * the word's `workspace_id`, which every word on the topic carries: no
+ * question of the database per word. Within its workspace it hears what
+ * the person would — a host's session is the person there, not a token.
+ */
+export async function hostHears(ctx: AuthContext, e: { kind: string; payload: unknown }): Promise<boolean> {
+  return ((e.payload ?? {}) as { workspace_id?: unknown }).workspace_id === ctx.workspaceId
+}
+
+/**
  * Whether a token hears one word on `/ws/me`.
  * Every token, not only one made for some projects: the topic is the
  * person's, and the person is in other workspaces the token was not made

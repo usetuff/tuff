@@ -20,7 +20,7 @@ import { subscribe } from './realtime.js'
 import { authSql, sql } from './db.js'
 import { guardRls } from './rlsGuard.js'
 import { needSiteUrl } from './publicUrl.js'
-import { mayListen, mayWatch, tokenHears } from './listening.js'
+import { hostHears, mayListen, mayWatch, tokenHears } from './listening.js'
 import { here } from './presence.js'
 import { typed } from './typing.js'
 import * as coedit from './coedit.js'
@@ -305,8 +305,15 @@ app.get(
            it — it is the person, in whichever workspace they switch to.
            A token hears only the words about its own workspace, and its
            own projects when it has some: the person's other workspaces
-           are not what it was made for (`listening.ts`, `tokenHears`). */
-        void held.on(ws, `actor:${ctx.actorId}`, ctx.actorId, () => alive(ctx), ctx.tokenId ? (e) => tokenHears(ctx, e) : undefined)
+           are not what it was made for (`listening.ts`, `tokenHears`).
+           Nor are they a session's made on a workspace's own domain,
+           which hears only its workspace's words (`hostHears`). */
+        const hears = ctx.tokenId
+          ? (e: { kind: string; payload: unknown }) => tokenHears(ctx, e)
+          : ctx.host
+            ? (e: { kind: string; payload: unknown }) => hostHears(ctx, e)
+            : undefined
+        void held.on(ws, `actor:${ctx.actorId}`, ctx.actorId, () => alive(ctx), hears)
         void here(ctx.actorId, ctx.workspaceId)
       },
       /*
