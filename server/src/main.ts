@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { inlineScripts, pageHeaders } from '@tracker/shared-schema'
 import { join, relative, resolve } from 'node:path'
 import { serve } from '@hono/node-server'
-import { serveStatic } from '@hono/node-server/serve-static'
+import { serveFiles } from './http/statics.js'
 import { createNodeWebSocket } from '@hono/node-ws'
 import type { WSContext } from 'hono/ws'
 import type { Context } from 'hono'
@@ -559,7 +559,9 @@ if (existsSync(join(client, 'index.html'))) {
      answers it — the landing on the service, the app's own sign-in on your
      own server. `edition.ts`. */
   edition.site({ app, client, withWays })
-  app.use('/*', serveStatic({ root: relative(process.cwd(), client) }))
+  /* The built files: an encoded dot or slash is not found, and a file found
+     carries the guard rails whatever its address — `statics.ts`. */
+  serveFiles(app, relative(process.cwd(), client), (c) => (hostOf(c) ? hostGuarded : guarded))
   /*
    * And anything the files do not answer is the app itself.
    *
