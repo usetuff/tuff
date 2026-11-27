@@ -93,6 +93,10 @@ export function cardRenderer({
    * says whose it is.
    */
   function card(t: Task, col: string, whose?: string) {
+    /* On the board of members the title stands after the status ring
+       (20) and its gap (8), so what follows it starts where the title's
+       words do rather than under the ring. */
+    const under = whose === undefined ? '' : 'pl-7'
     return (
       <>
         {/*
@@ -204,7 +208,7 @@ export function cardRenderer({
         {shows.excerpt && t.excerpt && (
           <p
             data-excerpt
-            className="mt-1 line-clamp-2 text-sm [overflow-wrap:anywhere] text-ink-3"
+            className={`mt-1 line-clamp-2 ${under} text-sm [overflow-wrap:anywhere] text-ink-3`}
             style={{ letterSpacing: 'var(--track-body)' }}
           >
             {t.excerpt}
@@ -330,7 +334,7 @@ export function cardRenderer({
           }
           if (chips.length === 0) return null
           return (
-            <div className="mt-2 flex flex-wrap items-center gap-1">
+            <div className={`mt-2 flex flex-wrap items-center gap-1 ${under}`}>
               {chips.map((chip, at) => (
                 <span
                   key={at}
@@ -377,7 +381,10 @@ export function cardRenderer({
             forty cards is four lines of grey nobody is reading on a board
             somebody is scanning for titles. */}
         {shows.dates && (
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-3" style={{ letterSpacing: 'var(--track-body)' }}>
+          <div
+            className={`mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-3 ${under}`}
+            style={{ letterSpacing: 'var(--track-body)' }}
+          >
             {t.created_at && <span className="whitespace-nowrap">{W.created(short(t.created_at))}</span>}
             <span className="whitespace-nowrap">{W.updated(short(t.decided_at))}</span>
           </div>
