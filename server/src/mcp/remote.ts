@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import { authenticate } from '../auth/context.js'
 import { origin } from '../http/oauth.js'
-import { PER_TOKEN, spend, workspaceAllowance } from '../http/limits.js'
+import { PER_TOKEN, personOf, spend, workspaceAllowance } from '../http/limits.js'
 import { tuffServer, type Call } from './tools.js'
 
 /**
@@ -71,7 +71,13 @@ remote.post('/mcp', async (c) => {
      the night audit (12). */
   const reader = {
     key: `person:${ctx.actorId}`,
-    spend: () => spend(`t:${ctx.tokenId}`, PER_TOKEN, `w:${ctx.workspaceId}`, workspaceAllowance(ctx.workspaceId)).catch(() => true),
+    /* And its person's minute, as every other request through a token
+       spends (`rateLimit`): without it twenty-five tokens of one person
+       had their bodies read past the twelve hundred (the eighth audit). */
+    spend: () =>
+      personOf(ctx)
+        .then((person) => spend(`t:${ctx.tokenId}`, PER_TOKEN, `w:${ctx.workspaceId}`, workspaceAllowance(ctx.workspaceId), `a:${person}`))
+        .catch(() => true),
   }
   await tuffServer(call, origin(c), reader).connect(transport)
   return transport.handleRequest(c.req.raw)

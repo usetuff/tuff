@@ -216,6 +216,15 @@ function meta(tags: string[], ...names: string[]): string | null {
   return null
 }
 
+/** Where a redirect goes, or null for a `Location` that is not an address. */
+export function nextUrl(location: string, from: URL): URL | null {
+  try {
+    return new URL(location, from)
+  } catch {
+    return null
+  }
+}
+
 export async function readCard(address: string): Promise<Card | null> {
   let url: URL
   try {
@@ -230,7 +239,10 @@ export async function readCard(address: string): Promise<Card | null> {
     const got = await get(url, 'page', until).catch(() => null)
     if (!got) return null
     if (got.status >= 300 && got.status < 400 && got.location) {
-      url = new URL(got.location, url)
+      /* A `Location` that is no address ends the read, not the request. */
+      const next = nextUrl(got.location, url)
+      if (!next) return null
+      url = next
       continue
     }
     if (got.status >= 400 || !got.body) return null
@@ -390,7 +402,10 @@ async function picture(address: string): Promise<{ type: string; bytes: Buffer }
     const got = await get(url, 'image', until).catch(() => null)
     if (!got) return null
     if (got.status >= 300 && got.status < 400 && got.location) {
-      url = new URL(got.location, url)
+      /* A `Location` that is no address ends the read, not the request. */
+      const next = nextUrl(got.location, url)
+      if (!next) return null
+      url = next
       continue
     }
     if (got.status >= 400 || got.bytes.length === 0) return null

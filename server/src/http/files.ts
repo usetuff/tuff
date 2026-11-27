@@ -1709,7 +1709,13 @@ files.get('/files/:id/content', async (c) => {
 })
 
 files.get('/blob/:key{.+}', async (c) => {
-  const key = decodeURIComponent(c.req.param('key'))
+  /* A key that does not decode is nobody's file — not a thrown 500. */
+  let key: string
+  try {
+    key = decodeURIComponent(c.req.param('key'))
+  } catch {
+    return c.json({ error: { code: 'not_found' } }, 404)
+  }
   const token = c.req.query('token') ?? ''
   // The signature is the whole authorisation here: this route is reached with
   // a link, and a link that outlives its check is the same as a public URL.
