@@ -10,6 +10,7 @@ import { seal } from '../auth/seal.js'
 import { ROUTINE_URL } from '../webhooks.js'
 import { badKey, hostOf, keyChange, keyOf } from './webhooks.js'
 import { PRESET, faced, put } from '../storage.js'
+import { rasterOf } from './files.js'
 import { AgentFacePick } from '@tracker/shared-schema'
 import { record } from './activity.js'
 import { spendOn } from './limits.js'
@@ -509,15 +510,15 @@ agents.post('/agents/:id/avatar', async (c) => {
   const form = await c.req.formData().catch(() => null)
   const picked = form?.get('file')
   if (!(picked instanceof File)) return c.json({ error: { code: 'invalid' } }, 400)
-  if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(picked.type)) {
-    return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
-  }
   if (picked.size > 2 * 1024 * 1024) {
     return c.json({ error: { code: 'too_large', message: 'Images can be up to 2 MB.' } }, 413)
   }
+  /* By its bytes, never the type the form says (`rasterOf`). */
   const bytes = new Uint8Array(await picked.arrayBuffer())
+  const type = rasterOf(bytes)
+  if (!type) return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
   const done = await withActor(ctx.actorId, ctx.workspaceId, async (tx) => {
-    const stored = await put(ctx.workspaceId, bytes, picked.type)
+    const stored = await put(ctx.workspaceId, bytes, type)
     const [r] = await tx<{ ok: boolean }[]>`select agent_face(${id}, ${stored.key}) as ok`
     return r?.ok === true
   })

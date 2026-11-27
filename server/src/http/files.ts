@@ -1943,6 +1943,23 @@ export function sniff(bytes: Uint8Array): string {
   return 'application/octet-stream'
 }
 
+/** The pictures a browser paints and runs nothing in. */
+export type Raster = 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp'
+const RASTER: readonly string[] = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+
+/**
+ * Which of those these bytes are, or null — for a face, a project's or a
+ * workspace's picture, and what a workspace's own domain serves as its
+ * icon. By the bytes alone: the type the sender wrote on the form was
+ * all that was asked, so an SVG sent as `image/png` was kept, and sniffed
+ * as what it is where it was served — a document that runs script on a
+ * workspace's own domain (the eighth audit).
+ */
+export function rasterOf(bytes: Uint8Array): Raster | null {
+  const type = sniff(bytes)
+  return RASTER.includes(type) ? (type as Raster) : null
+}
+
 /**
  * An SVG, which is text: an `<svg` element first, after at most an XML
  * declaration, a doctype and comments.

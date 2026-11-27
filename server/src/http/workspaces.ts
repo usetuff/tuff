@@ -6,6 +6,7 @@ import { allow, type AuthContext } from '../auth/context.js'
 import { newWorkspace, startSession } from '../auth/flows.js'
 import { MarkIcon, MarkTint } from '@tracker/shared-schema'
 import { linkFor, put } from '../storage.js'
+import { rasterOf } from './files.js'
 import { metaOf, spendOn } from './limits.js'
 import { oneLine } from '../text.js'
 import { bellsWaiting } from './inbox.js'
@@ -197,17 +198,18 @@ workspaces.post('/workspace/icon', async (c) => {
   const form = await c.req.formData().catch(() => null)
   const picked = form?.get('file')
   if (!(picked instanceof File)) return c.json({ error: { code: 'invalid' } }, 400)
-  /* What a browser can draw, and nothing else: an SVG was taken and then
-     could not be shown — served as bytes nobody could name, and from this
-     origin it would be a document that runs script if opened. The web turns
-     one into a PNG before sending it. `data/picture.ts`. */
-  if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(picked.type)) {
-    return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
-  }
   if (picked.size > 2 * 1024 * 1024) {
     return c.json({ error: { code: 'too_large', message: 'Images can be up to 2 MB.' } }, 413)
   }
-  const stored = await put(ctx.workspaceId, new Uint8Array(await picked.arrayBuffer()), picked.type)
+  /* What a browser can draw, and nothing else, by its bytes — never the
+     type the form says: an SVG was taken and then could not be shown, and
+     from this origin, or a workspace's own domain, it would be a document
+     that runs script if opened. The web turns one into a PNG before
+     sending it. `data/picture.ts`, `rasterOf`. */
+  const bytes = new Uint8Array(await picked.arrayBuffer())
+  const type = rasterOf(bytes)
+  if (!type) return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
+  const stored = await put(ctx.workspaceId, bytes, type)
   await withActor(ctx.actorId, ctx.workspaceId, (tx) => tx`update workspace set icon_key = ${stored.key} where id = ${ctx.workspaceId}`)
   return c.json({ ok: true, icon_url: linkFor(stored.key) })
 })

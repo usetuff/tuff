@@ -19,6 +19,7 @@ import { record } from './activity.js'
 import { LINES, doer, notify } from '../notify.js'
 import { subscribe } from './objects.js'
 import { faced, linkFor, put } from '../storage.js'
+import { rasterOf } from './files.js'
 import { statusByAgent } from '../doing.js'
 import { isMoment, pageSize, spendOn } from './limits.js'
 import { LABELS_FR, SAMPLE, SAMPLE_FR, TEMPLATES_FR, doc, listName, type Label } from '../templates.js'
@@ -533,20 +534,19 @@ projects.post('/projects/:id/icon', async (c) => {
   const form = await c.req.formData().catch(() => null)
   const picked = form?.get('file')
   if (!(picked instanceof File)) return c.json({ error: { code: 'invalid' } }, 400)
-  /* What a browser can draw, and nothing else: an SVG was taken and then
-     could not be shown — served as bytes nobody could name, and from this
-     origin it would be a document that runs script if opened. The web turns
-     one into a PNG before sending it. `data/picture.ts`. */
-  if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(picked.type)) {
-    return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
-  }
   if (picked.size > 2 * 1024 * 1024) {
     return c.json({ error: { code: 'too_large', message: 'Images can be up to 2 MB.' } }, 413)
   }
-
+  /* What a browser can draw, and nothing else, by its bytes — never the
+     type the form says: an SVG was taken and then could not be shown, and
+     from this origin it would be a document that runs script if opened.
+     The web turns one into a PNG before sending it. `data/picture.ts`,
+     `rasterOf`. */
   const bytes = new Uint8Array(await picked.arrayBuffer())
+  const type = rasterOf(bytes)
+  if (!type) return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
   const done = await withActor(ctx.actorId, ctx.workspaceId, async (tx) => {
-    const stored = await put(ctx.workspaceId, bytes, picked.type)
+    const stored = await put(ctx.workspaceId, bytes, type)
     const rows = await tx<{ id: string }[]>`
       update project set icon_key = ${stored.key}
       where id = ${id} and deleted_at is null returning id`

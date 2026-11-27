@@ -254,9 +254,10 @@ test('an agent’s face is set and taken off by whoever connected it, nobody els
   const carol = await addPerson(boss.ctx, boss.workspaceId, 'member', [p])
   const carolToken = await signedIn(carol.actorId, boss.workspaceId)
 
-  const upload = async (as: string, type = 'image/png') => {
+  const PNG = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
+  const upload = async (as: string, type = 'image/png', bytes: Uint8Array<ArrayBuffer> = PNG) => {
     const form = new FormData()
-    form.append('file', new Blob([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], { type }), 'face.png')
+    form.append('file', new Blob([bytes], { type }), 'face.png')
     const res = await app.request(`/api/agents/${agent}/avatar`, { method: 'POST', headers: { authorization: `Bearer ${as}` }, body: form })
     return res.status
   }
@@ -273,7 +274,10 @@ test('an agent’s face is set and taken off by whoever connected it, nobody els
 
   assert.equal(await upload(carolToken), 403)
   assert.equal(await face(), null)
-  assert.equal(await upload(bobToken, 'image/svg+xml'), 400)
+  const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')
+  assert.equal(await upload(bobToken, 'image/svg+xml', svg), 400)
+  // Its bytes, not the type the form says (the eighth audit).
+  assert.equal(await upload(bobToken, 'image/png', svg), 400)
   assert.equal(await upload(bobToken), 200)
   assert.ok(await face())
   // The same face wherever the people are listed.

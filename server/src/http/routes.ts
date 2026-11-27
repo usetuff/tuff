@@ -50,7 +50,7 @@ import { tokens } from './tokens.js'
 import { posts } from './posts.js'
 import { tasks } from './tasks.js'
 import { blocks } from './blocks.js'
-import { files } from './files.js'
+import { files, rasterOf } from './files.js'
 import { versions } from './versions.js'
 import { search } from './search.js'
 import { authLimit, clientOf, fromOurEdge, guess, metaOf, onThisMachine, rateLimit, reask, spendOn } from './limits.js'
@@ -927,21 +927,18 @@ app.post('/api/me/avatar', async (c) => {
   const form = await c.req.formData().catch(() => null)
   const picked = form?.get('file')
   if (!(picked instanceof File)) return c.json({ error: { code: 'invalid' } }, 400)
-  /* What a browser can draw, and nothing else: an SVG was taken and then
-     could not be shown — served as bytes nobody could name, and from this
-     origin it would be a document that runs script if opened. The web turns
-     one into a PNG before sending it. `data/picture.ts`. */
-  if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(picked.type)) {
-    return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
-  }
   // The project icon's limit, so there is one answer to how big a picture is.
   if (picked.size > 2 * 1024 * 1024) {
     return c.json({ error: { code: 'too_large', message: 'Images can be up to 2 MB.' } }, 413)
   }
-
+  /* What a browser can draw, and nothing else, by its bytes — never the
+     type the form says (`rasterOf`). The web turns an SVG into a PNG
+     before sending it. `data/picture.ts`. */
   const bytes = new Uint8Array(await picked.arrayBuffer())
+  const type = rasterOf(bytes)
+  if (!type) return c.json({ error: { code: 'invalid', message: 'Use a PNG, JPEG, GIF or WebP image.' } }, 400)
   await withActor(ctx.actorId, ctx.workspaceId, async (tx) => {
-    const stored = await put(ctx.workspaceId, bytes, picked.type)
+    const stored = await put(ctx.workspaceId, bytes, type)
     await tx`update actor set avatar_key = ${stored.key} where id = ${ctx.actorId}`
   })
   /* Nothing recorded. A project's icon is logged because a project is shared
