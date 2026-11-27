@@ -160,9 +160,23 @@ nowhere.get(
   '/me/invitations',
   only(async (c, who) => {
     const rows = await withoutActor(
-      (tx) => tx<{ id: string; workspace_name: string }[]>`select id, workspace_name from invites_waiting(${who.actorId})`,
+      (tx) => tx<{ id: string; workspace_name: string; token_hash: string }[]>`
+        select id, workspace_name, token_hash from invites_waiting(${who.actorId})`,
     )
-    return c.json({ invitations: rows.map((r) => ({ id: r.id, workspace_name: r.workspace_name })) })
+    /* One mailed to a workspace's own domain is taken there, from its letter:
+       said with the host while it answers, left out once it does not —
+       nothing can take it then. */
+    const placed = await Promise.all(
+      rows.map(async (r) => {
+        const [p] = await withoutActor(
+          (tx) => tx<{ mailed_domain: string | null }[]>`select mailed_domain from invite_place(${r.token_hash})`,
+        )
+        if (!p?.mailed_domain) return { id: r.id, workspace_name: r.workspace_name }
+        const [d] = await withoutActor((tx) => tx<{ hostname: string }[]>`select hostname from host_domain(${p.mailed_domain})`)
+        return d ? { id: r.id, workspace_name: r.workspace_name, host: d.hostname } : null
+      }),
+    )
+    return c.json({ invitations: placed.filter((r) => r !== null) })
   }),
 )
 

@@ -3620,6 +3620,9 @@
               },
               "workspace_name": {
                 "type": "string"
+              },
+              "host": {
+                "type": "string"
               }
             },
             "required": [
@@ -10399,6 +10402,9 @@
             "string",
             "null"
           ]
+        },
+        "send_again": {
+          "type": "boolean"
         }
       },
       "required": [

@@ -394,14 +394,17 @@ function OutInvite({
             holds has the whole width under it. */}
         <span className="flex items-center gap-2">
           <span className="min-w-px flex-1 truncate text-base text-ink">{i.email ?? W.anyoneWithTheLink}</span>
+          {/* Its link went with the workspace's own domain: the press it
+              needs is in sight, not behind the pointer. */}
           <button
             data-testid="resend-invite"
+            data-send-again={i.send_again ? '' : undefined}
             title={i.email ? undefined : W.copyNewLinkHint}
             disabled={busy}
-            className={quiet}
+            className={i.send_again ? 'shrink-0 text-xs text-accent' : quiet}
             onClick={() => void again()}
           >
-            {i.email ? W.resend : W.copyNewLink}
+            {i.send_again ? W.sendAgain : i.email ? W.resend : W.copyNewLink}
           </button>
           <button data-testid="revoke-invite" className={quiet} onClick={() => void onRevoke()}>
             {W.revoke}
@@ -409,6 +412,7 @@ function OutInvite({
         </span>
         <span data-invite-said={said ? '' : undefined} className="truncate text-badge text-ink-3">
           {said ??
+            (i.send_again ? W.linkStopped : null) ??
             [
               i.role === 'owner' ? W.owner : W.member,
               i.project_ids.length

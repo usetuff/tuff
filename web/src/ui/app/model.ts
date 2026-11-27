@@ -47,6 +47,9 @@ export type Invitation = {
   expires_at: string
   used_at: string | null
   deleted_at: string | null
+  /** Mailed to the workspace's own domain, which no longer opens it: taken
+      nowhere, to be sent again — the server's answer (`custom-domain.md`). */
+  send_again?: boolean
 }
 /** The three places an agency and a large internal team genuinely differ. */
 

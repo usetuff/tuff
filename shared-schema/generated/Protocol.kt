@@ -2442,6 +2442,9 @@ data class InviteRow (
     val rights: List<String>,
     val role: String,
 
+    @SerialName("send_again")
+    val sendAgain: Boolean? = null,
+
     @SerialName("used_at")
     val usedAt: String? = null,
 
@@ -4938,6 +4941,7 @@ data class WaitingInvitations (
 
 @Serializable
 data class Invitation (
+    val host: String? = null,
     val id: String,
 
     @SerialName("workspace_name")

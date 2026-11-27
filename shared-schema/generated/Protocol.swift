@@ -3292,6 +3292,7 @@ public enum API {
         public let projectIDS: [String]
         public let rights: [String]
         public let role: String
+        public let sendAgain: Bool?
         public let usedAt: String?
         public let usedBy: String?
 
@@ -3303,11 +3304,12 @@ public enum API {
             case id
             case projectIDS = "project_ids"
             case rights, role
+            case sendAgain = "send_again"
             case usedAt = "used_at"
             case usedBy = "used_by"
         }
 
-        public init(createdAt: String, deletedAt: String?, email: String?, expiresAt: String, id: String, projectIDS: [String], rights: [String], role: String, usedAt: String?, usedBy: String?) {
+        public init(createdAt: String, deletedAt: String?, email: String?, expiresAt: String, id: String, projectIDS: [String], rights: [String], role: String, sendAgain: Bool?, usedAt: String?, usedBy: String?) {
             self.createdAt = createdAt
             self.deletedAt = deletedAt
             self.email = email
@@ -3316,6 +3318,7 @@ public enum API {
             self.projectIDS = projectIDS
             self.rights = rights
             self.role = role
+            self.sendAgain = sendAgain
             self.usedAt = usedAt
             self.usedBy = usedBy
         }
@@ -6936,15 +6939,17 @@ public enum API {
 
     // MARK: - Invitation
     public struct Invitation: Codable, Sendable {
+        public let host: String?
         public let id: String
         public let workspaceName: String
 
         public enum CodingKeys: String, CodingKey {
-            case id
+            case host, id
             case workspaceName = "workspace_name"
         }
 
-        public init(id: String, workspaceName: String) {
+        public init(host: String?, id: String, workspaceName: String) {
+            self.host = host
             self.id = id
             self.workspaceName = workspaceName
         }

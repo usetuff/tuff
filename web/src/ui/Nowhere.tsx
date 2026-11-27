@@ -14,7 +14,7 @@ import { Unconfirmed, type Waiting as Unanswered } from './Unconfirmed.jsx'
  * the invitations do not arrive under the button a moment later.
  */
 type NowhereMe = { email: string; can: string[] }
-type Waiting = { id: string; workspace_name: string }
+type Waiting = { id: string; workspace_name: string; host?: string }
 
 export function Nowhere() {
   const [me, setMe] = useState<NowhereMe | null>(null)
@@ -89,16 +89,24 @@ export function Nowhere() {
                 style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--line)' }}
               >
                 <span className="min-w-px flex-1 truncate text-md text-ink">{w.workspace_name}</span>
-                <button
-                  type="button"
-                  data-testid="nowhere-join"
-                  disabled={joining !== null}
-                  onClick={() => void join(w.id)}
-                  className="h-8 rounded-full px-4 text-base font-medium"
-                  style={primaryLook}
-                >
-                  {joining === w.id ? W.joining : W.join}
-                </button>
+                {/* Mailed to that workspace's own domain: taken there, from
+                    the email, not here — said rather than refused. */}
+                {w.host ? (
+                  <span data-testid="nowhere-from-email" className="shrink-0 truncate text-base text-ink-3">
+                    {W.fromEmail(w.host)}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid="nowhere-join"
+                    disabled={joining !== null}
+                    onClick={() => void join(w.id)}
+                    className="h-8 rounded-full px-4 text-base font-medium"
+                    style={primaryLook}
+                  >
+                    {joining === w.id ? W.joining : W.join}
+                  </button>
+                )}
               </div>
             ))}
           </section>

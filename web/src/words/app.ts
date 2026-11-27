@@ -79,6 +79,12 @@ export const APP = say({
   revoke: ['Revoke', 'Révoquer'],
   /* Sending an invitation again. */
   resend: ['Resend', 'Renvoyer'],
+  /* An invitation whose link went with the workspace's own domain. */
+  sendAgain: ['Send again', 'Envoyer à nouveau'],
+  linkStopped: [
+    'Its link stopped working with your domain. Send it again.',
+    'Son lien ne fonctionne plus avec votre domaine. Envoyez-la à nouveau.',
+  ],
   copyNewLink: ['Copy new link', 'Copier un nouveau lien'],
   copyNewLinkHint: ['Makes a new link. The old one stops working.', 'Crée un nouveau lien. L’ancien ne fonctionnera plus.'],
   newLinkCopied: ['New link copied. The old one no longer works.', 'Nouveau lien copié. L’ancien ne fonctionne plus.'],

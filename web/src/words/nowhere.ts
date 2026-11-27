@@ -8,6 +8,8 @@ export const NOWHERE = say({
   cantCreate: ['Ask someone to invite you to their workspace.', 'Demandez à quelqu’un de vous inviter dans son espace de travail.'],
   invited: ['Invitations', 'Invitations'],
   join: ['Join', 'Rejoindre'],
+  /* One mailed to a workspace's own domain, taken there from its email. */
+  fromEmail: [(host: string) => `Use the email’s link · ${host}`, (host: string) => `Utilisez le lien de l’e-mail · ${host}`],
   joining: ['Joining…', 'Connexion…'],
   couldntJoin: ['Couldn’t join. Try again.', 'Impossible de rejoindre. Réessayez.'],
   signedInAs: [(email: string) => `Signed in as ${email}`, (email: string) => `Connecté en tant que ${email}`],

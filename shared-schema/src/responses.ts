@@ -412,7 +412,17 @@ export const NowhereMe = z.object({
   nowhere: z.literal(true),
 })
 /** `GET /api/me/invitations` — to a session in no workspace. */
-export const WaitingInvitations = z.object({ invitations: z.array(z.object({ id: Uuid, workspace_name: z.string() })) })
+export const WaitingInvitations = z.object({
+  invitations: z.array(
+    z.object({
+      id: Uuid,
+      workspace_name: z.string(),
+      /** Mailed to that workspace's own domain, and taken there from its
+          letter rather than here. */
+      host: z.string().optional(),
+    }),
+  ),
+})
 
 /**
  * `GET /api/me/unconfirmed` — the workspaces the account was in before its
@@ -1615,6 +1625,9 @@ export const InviteRow = z.object({
   used_at: z.string().nullable().optional(),
   used_by: Uuid.nullable().optional(),
   deleted_at: z.string().nullable().optional(),
+  /** Mailed to the workspace's own domain, which no longer opens it: it can
+      be taken nowhere, and must be sent again. */
+  send_again: z.boolean().optional(),
 })
 export const InviteList = z.object({ invites: z.array(InviteRow) })
 /**
