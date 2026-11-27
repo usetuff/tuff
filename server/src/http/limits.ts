@@ -158,7 +158,25 @@ const CLOUDFLARE_V4 = [
   '172.64.0.0/13',
   '131.0.72.0/22',
 ]
-const CLOUDFLARE_V6 = ['2400:cb00:', '2606:4700:', '2803:f800:', '2405:b500:', '2405:8100:', '2a06:98', '2c0f:f248:']
+/* By their first hextets. `2a06:98c0::/29` is 2a06:98c0 to 2a06:98c7, and
+   was written `2a06:98`, which took in 2a06:9800 to 2a06:98ff — sixty-four
+   times Cloudflare's block, most of it other people's (the eighth audit). */
+const CLOUDFLARE_V6 = [
+  '2400:cb00:',
+  '2606:4700:',
+  '2803:f800:',
+  '2405:b500:',
+  '2405:8100:',
+  '2a06:98c0:',
+  '2a06:98c1:',
+  '2a06:98c2:',
+  '2a06:98c3:',
+  '2a06:98c4:',
+  '2a06:98c5:',
+  '2a06:98c6:',
+  '2a06:98c7:',
+  '2c0f:f248:',
+]
 
 function v4(ip: string): number | null {
   const p = ip.split('.').map(Number)
@@ -180,6 +198,22 @@ export function fromCloudflare(ip: string): boolean {
 }
 
 /**
+ * How many entries at the end of `X-Forwarded-For` the deployment's own
+ * proxies wrote — `PROXY_HOPS`, two when unset. Railway writes two (below),
+ * and the bundled Caddy replaces the header with one, which two reads the
+ * same as before. A proxy that *appends* one entry to what the client sent
+ * — nginx with `$proxy_add_x_forwarded_for`, an AWS load balancer — is
+ * `1`: read at two, the entry before its own was the client's to write,
+ * and a fresh address on every request was a fresh allowance
+ * (`docs/self-hosting.md`, "Behind a proxy of your own"; the eighth audit).
+ * The deployment's shape, not a product setting.
+ */
+export function proxyHops(raw = process.env.PROXY_HOPS): number {
+  const n = Number(raw)
+  return raw && Number.isInteger(n) && n >= 1 && n <= 10 ? n : 2
+}
+
+/**
  * Who is asking, by address.
  *
  * Railway's proxy writes, at the end of `X-Forwarded-For`, the address that
@@ -187,14 +221,15 @@ export function fromCloudflare(ip: string): boolean {
  * of two Railway machines, and every limit keyed on it was one limit shared
  * by everybody. The one before is who connected, which nothing the sender
  * writes can move; and when that is Cloudflare, standing in front of the
- * domain, the person behind it is `CF-Connecting-IP`.
+ * domain, the person behind it is `CF-Connecting-IP`. Elsewhere it is the
+ * entry `hops` from the end (`proxyHops`), or the only one there is.
  */
-export function addressOf(forwarded: string | undefined, cloudflare?: string | undefined): string {
+export function addressOf(forwarded: string | undefined, cloudflare?: string | undefined, hops = proxyHops()): string {
   const all = (forwarded ?? '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
-  const peer = all.length >= 2 ? all[all.length - 2]! : (all[0] ?? 'local')
+  const peer = all.length >= hops ? all[all.length - hops]! : (all[0] ?? 'local')
   if (cloudflare && fromCloudflare(peer)) return cloudflare.trim()
   return peer
 }

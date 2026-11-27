@@ -368,6 +368,7 @@ make yourself. Without them, Settings says they are not set up here.
 | `KLIPY_API_KEY` | none | A [KLIPY](https://klipy.com) key, for the GIF button in chat. The browser then asks KLIPY itself: see [What leaves your server](#what-leaves-your-server). |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | none | Cloudflare Turnstile keys. A project's public feedback page refuses every message without them. |
 | `ORIGIN_SECRET` | none | Only if Cloudflare is in front: see the proxy notes below. |
+| `PROXY_HOPS` | `2` | How many entries at the end of `X-Forwarded-For` your own proxies write. `1` behind a single proxy that appends (nginx with `$proxy_add_x_forwarded_for`, an AWS load balancer). See [Behind a proxy of your own](#behind-a-proxy-of-your-own). |
 | `TUFF_IMAGE` | `ghcr.io/usetuff/tuff` | Where the image is pulled from, for a registry of your own that mirrors it. |
 | `TRY_LOCALHOST` | off | Only for [trying Tuff on your computer](#try-it-on-your-computer), which sets it. Never on a server: with any `APP_URL` but `http://localhost` or `http://127.0.0.1` the app refuses to start. |
 | `UPDATE_CHECK` | on | `off` stops the daily request for the latest release — see [Hearing of a new version](#hearing-of-a-new-version). |
@@ -440,13 +441,16 @@ Caddy:
 Never publish port 8787 to the internet without a proxy.
 
 **How Tuff finds a person's IP.** Sign-in attempts, sign-ups and the API
-are limited per IP. Tuff reads the IP from `X-Forwarded-For`, and takes the
-**second-to-last** entry when there are two or more, or the only entry when
-there is one. That is right when the one proxy in front of Tuff **replaces**
-the header with the address that connected to it. It is wrong when the
-proxy **appends** to whatever the request already carried: then a client
-that sends its own `X-Forwarded-For: anything` chooses the address Tuff
-sees, and gets a fresh allowance on every request.
+are limited per IP. Tuff reads the IP from `X-Forwarded-For`: the entry
+`PROXY_HOPS` places from the end — **the second-to-last** by default — or
+the only entry when there are fewer. The default is right when the one
+proxy in front of Tuff **replaces** the header with the address that
+connected to it, and on Railway, whose proxy writes two entries. It is
+wrong when a proxy **appends** to whatever the request already carried:
+then a client that sends its own `X-Forwarded-For: anything` chooses the
+address Tuff sees, and gets a fresh allowance on every request. Either make
+the proxy replace the header, or set `PROXY_HOPS` to the number of entries
+your proxies add.
 
 - **Caddy**, as shipped, replaces the header. Nothing to do.
 - **nginx**: use
@@ -455,13 +459,17 @@ sees, and gets a fresh allowance on every request.
   proxy_set_header X-Forwarded-For $remote_addr;
   ```
 
-  and **not** `$proxy_add_x_forwarded_for`, which appends.
+  or keep `$proxy_add_x_forwarded_for`, which appends, and set
+  `PROXY_HOPS=1`.
 - **Traefik** replaces the header by default, for requests from addresses
   it does not trust. Do not set `forwardedHeaders.insecure`, and do not put
   addresses the internet can reach in `forwardedHeaders.trustedIPs`.
+- **An AWS Application Load Balancer** appends by default: `PROXY_HOPS=1`
+  with it alone in front.
 - **Two proxies** (a load balancer, then nginx): the inner one should append
-  exactly once, so the header reaches Tuff as `client, load-balancer`, and
-  the outer one should replace.
+  exactly once, so the header reaches Tuff as `…, client, load-balancer`;
+  the outer one may replace or append. That is the default, `2`. Each
+  further proxy that appends adds one.
 - **No `X-Forwarded-For` at all**, as when port 8787 is open directly: every
   request looks like one person, and the limits are shared by everybody.
 
