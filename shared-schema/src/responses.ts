@@ -1644,16 +1644,7 @@ export const InviteList = z.object({ invites: z.array(InviteRow) })
  * Empty rather than absent, so every client that decodes it as a string
  * still does.
  */
-export const InviteMade = z.object({
-  id: Uuid,
-  token: z.string(),
-  mailed: z.boolean(),
-  /** A link with no address, bound to the workspace's own domain before it
-      was shown: copied as `https://<host>/invite/<token>` and taken only
-      there. Absent
-      otherwise, and the link is this server's own address. */
-  host: z.string().optional(),
-})
+export const InviteMade = z.object({ id: Uuid, token: z.string(), mailed: z.boolean() })
 export type InviteMade = z.infer<typeof InviteMade>
 
 

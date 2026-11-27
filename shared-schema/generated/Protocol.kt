@@ -2454,7 +2454,6 @@ data class InviteRow (
 
 @Serializable
 data class InviteMade (
-    val host: String? = null,
     val id: String,
     val mailed: Boolean,
     val token: String

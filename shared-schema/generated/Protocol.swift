@@ -3326,13 +3326,11 @@ public enum API {
 
     // MARK: - InviteMade
     public struct InviteMade: Codable, Sendable {
-        public let host: String?
         public let id: String
         public let mailed: Bool
         public let token: String
 
-        public init(host: String?, id: String, mailed: Bool, token: String) {
-            self.host = host
+        public init(id: String, mailed: Bool, token: String) {
             self.id = id
             self.mailed = mailed
             self.token = token

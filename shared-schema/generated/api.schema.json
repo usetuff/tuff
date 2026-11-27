@@ -10448,9 +10448,6 @@
         },
         "mailed": {
           "type": "boolean"
-        },
-        "host": {
-          "type": "string"
         }
       },
       "required": [
