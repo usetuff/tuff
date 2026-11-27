@@ -5821,7 +5821,7 @@ public enum API {
         public let completedAt: String?
         public let createdAt: String?
         public let cycleID: String?
-        public let decidedAt, dueOn, endsAt: String?
+        public let decidedAt, dueOn, endsAt, excerpt: String?
         public let id: String
         public let labels: [LabelOnTask]?
         public let listID: String?
@@ -5845,7 +5845,7 @@ public enum API {
             case decidedAt = "decided_at"
             case dueOn = "due_on"
             case endsAt = "ends_at"
-            case id, labels
+            case excerpt, id, labels
             case listID = "list_id"
             case number
             case parentID = "parent_id"
@@ -5858,7 +5858,7 @@ public enum API {
             case waitingOn = "waiting_on"
         }
 
-        public init(assigneeID: String?, assigneeIDS: [String]?, authorID: String?, completedAt: String?, createdAt: String?, cycleID: String?, decidedAt: String?, dueOn: String?, endsAt: String?, id: String, labels: [LabelOnTask]?, listID: String?, number: Int, parentID: String?, picture: TaskPicture?, priority: String?, taskInProjectRepeat: Repeat?, sortKey: String?, startsAt: String?, title: String, updatedAt: String?, waitingOn: [String]?) {
+        public init(assigneeID: String?, assigneeIDS: [String]?, authorID: String?, completedAt: String?, createdAt: String?, cycleID: String?, decidedAt: String?, dueOn: String?, endsAt: String?, excerpt: String?, id: String, labels: [LabelOnTask]?, listID: String?, number: Int, parentID: String?, picture: TaskPicture?, priority: String?, taskInProjectRepeat: Repeat?, sortKey: String?, startsAt: String?, title: String, updatedAt: String?, waitingOn: [String]?) {
             self.assigneeID = assigneeID
             self.assigneeIDS = assigneeIDS
             self.authorID = authorID
@@ -5868,6 +5868,7 @@ public enum API {
             self.decidedAt = decidedAt
             self.dueOn = dueOn
             self.endsAt = endsAt
+            self.excerpt = excerpt
             self.id = id
             self.labels = labels
             self.listID = listID

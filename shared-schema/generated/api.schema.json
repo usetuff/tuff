@@ -4861,6 +4861,12 @@
         "picture": {
           "$ref": "#/$defs/TaskPicture"
         },
+        "excerpt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "waiting_on": {
           "type": "array",
           "items": {

@@ -780,6 +780,11 @@ export const TaskInProject = z.object({
   /** Its first picture, for a card — only when asked with `?pictures=1`,
    *  and only one the reader may open. */
   picture: TaskPicture.optional(),
+  /** The start of its description as plain words — text, `@Name` for a
+   *  person named, a chip's handle and title — spaces folded, at most 160
+   *  characters with an ellipsis when cut; null when it has none.
+   *  */
+  excerpt: z.string().nullable().optional(),
   /** The handles of what it waits on that is still open and the reader can
    *  see, oldest relation first. */
   waiting_on: z.array(z.string()).optional(),

@@ -212,6 +212,10 @@ const listColumns = (tx: Tx) => tx`
              t.priority, t.starts_at, t.ends_at, t.sort_key, t.cycle_id,
              t.completed_at, t.decided_at, t.author_id, t.parent_id, t.updated_at,
              t.created_at, t.repeat,
+             /* The start of its description as plain words, kept by the
+                database beside the body (migration 332) -- not the body,
+                which a list of ten thousand would carry whole. */
+             t.excerpt,
              /* The words on it, with the list rather than behind a second
                 request: a label is drawn on the row, so a screen that has the
                 rows and not the labels is a screen drawn twice.
