@@ -149,7 +149,7 @@ export const ERRORS_FR: Record<string, string> = {
   'This link is no longer valid.': 'Ce lien n’est plus valide.',
   'This invitation is for a different email address.': 'Cette invitation est destinée à une autre adresse e-mail.',
   /* An invitation mailed to a workspace's own domain, taken only there. */
-  'Open the invitation’s link to accept it.': 'Ouvrez le lien de l’invitation pour l’accepter.',
+  'Accept this invitation from the link in its email.': 'Acceptez cette invitation depuis le lien de son e-mail.',
   'That email already has an account. Use its password to join.':
     'Un compte existe déjà avec cette adresse e-mail. Utilisez son mot de passe pour rejoindre l’espace de travail.',
   'Your password needs at least 12 characters.': 'Votre mot de passe doit comporter au moins 12 caractères.',

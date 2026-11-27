@@ -85,11 +85,6 @@ export const APP = say({
     'Its link stopped working with your domain. Send it again.',
     'Son lien ne fonctionne plus avec votre domaine. Envoyez-la à nouveau.',
   ],
-  /* The same, for a link with no address: there is nothing to send, only a new link to copy. */
-  linkStoppedCopy: [
-    'This link stopped working with your domain. Copy a new one.',
-    'Ce lien ne fonctionne plus avec votre domaine. Copiez-en un nouveau.',
-  ],
   copyNewLink: ['Copy new link', 'Copier un nouveau lien'],
   copyNewLinkHint: ['Makes a new link. The old one stops working.', 'Crée un nouveau lien. L’ancien ne fonctionnera plus.'],
   newLinkCopied: ['New link copied. The old one no longer works.', 'Nouveau lien copié. L’ancien ne fonctionne plus.'],
