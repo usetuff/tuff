@@ -108,6 +108,9 @@ export type ProjectProps = {
   ) => void
   /** Whose echo to ignore on the socket. */
   meId: string
+  /** On a workspace's own domain that keeps inviting shut, this project's
+      settings at usetuff.com, for its Invite someone new — `inviteAway`. */
+  inviteAway?: string | null | undefined
 }
 
 export function Project({
@@ -133,6 +136,7 @@ export function Project({
   kind,
   onNavigate: navigate,
   meId,
+  inviteAway = null,
 }: ProjectProps) {
   const {
     canSettings,
@@ -560,7 +564,9 @@ export function Project({
               <Activity projectId={project.id} revision={revision + beat} onOpen={(t, id) => onNavigate({ tool: t, objectId: id })} />
             )}
 
-            {shown === 'settings' && <ProjectSettings project={project} can={can} onChanged={onChanged} onGone={onGone} />}
+            {shown === 'settings' && (
+              <ProjectSettings project={project} can={can} onChanged={onChanged} onGone={onGone} inviteAway={inviteAway} />
+            )}
           </div>
         </ToolbarSlot>
       </div>

@@ -2,6 +2,8 @@ import { SAYS, MORE } from '../../data/words.js'
 import { APP as W } from '../../words/app.js'
 import { api } from '../../data/api.js'
 import { Project as ProjectScreen } from '../Project.jsx'
+import { inviteAway } from '../../data/doors.js'
+import { format } from '../../data/route.js'
 import { EmptyState } from '../kit.jsx'
 import { Icon } from '../glyphs.jsx'
 import { type AppState } from './useAppState.js'
@@ -148,6 +150,9 @@ export function projectsScreen({
                  and cannot find. */
             can={project.can ?? me.can}
             meId={me.actor.id}
+            /* On a workspace's own domain that keeps inviting shut, this
+               project's settings at usetuff.com. */
+            inviteAway={inviteAway(me, format({ view: 'projects', projectId: project.id, tool: 'settings' }))}
             onChanged={load}
             /*
              * Somewhere definite, in one move.

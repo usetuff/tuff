@@ -7,6 +7,7 @@ import { pictureFor } from '../data/picture.js'
 import { onHost } from '../data/host.js'
 import { FACTS, HEADS, MAKE, MORE, PROJECT, SAYS, now } from '../data/words.js'
 import { PROJECT_SETTINGS as W } from '../words/projectSettings.js'
+import { TOP_BAR } from '../words/topBar.js'
 import type { FeedbackSettings as FeedbackSettingsRead, PersonInProject, PersonInWorkspace } from '@tracker/shared-schema'
 import { api, stored } from '../data/api.js'
 import { ahead, known } from '../data/ahead.js'
@@ -75,6 +76,7 @@ export function ProjectSettings({
   can,
   onChanged,
   onGone,
+  inviteAway = null,
 }: {
   project: {
     id: string
@@ -91,6 +93,9 @@ export function ProjectSettings({
   onChanged: () => Promise<void>
   /** Archived or deleted: the sidebar has to stop showing it. */
   onGone: () => void
+  /** On a workspace's own domain that keeps inviting shut, this screen at
+      usetuff.com, where Invite someone new opens — `inviteAway`. */
+  inviteAway?: string | null | undefined
 }) {
   /*
    * `null` until everything this screen shows has arrived.
@@ -718,7 +723,7 @@ export function ProjectSettings({
                 this screen ends with: somebody already in the workspace,
                 picked; or somebody new, invited straight onto this
                 project. */}
-            {mayStaff && (off.length > 0 || can.includes('people.invite')) && (
+            {mayStaff && (off.length > 0 || can.includes('people.invite') || inviteAway) && (
               <>
                 <Hairline inset={14} />
                 <div className="flex flex-wrap items-center gap-3 px-4 py-2">
@@ -753,6 +758,23 @@ export function ProjectSettings({
                     >
                       {W.inviteSomeoneNew}
                     </button>
+                  )}
+                  {/* On a workspace's own domain, which keeps inviting shut:
+                      the same words as a link to this screen at usetuff.com,
+                      with the arrow that says it leaves. */}
+                  {!can.includes('people.invite') && inviteAway && (
+                    <a
+                      data-testid="project-invite-away"
+                      href={inviteAway}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={TOP_BAR.opensAt(new URL(inviteAway).host)}
+                      className="ml-auto flex items-center gap-1 text-base text-accent"
+                    >
+                      {W.inviteSomeoneNew}
+                      <span className="sr-only">{TOP_BAR.opensAt(new URL(inviteAway).host)}</span>
+                      <Icon name="away" size={12} />
+                    </a>
                   )}
                 </div>
               </>

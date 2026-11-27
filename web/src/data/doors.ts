@@ -42,6 +42,17 @@ export function doorsAway(me: { can: readonly string[]; can_off_host?: readonly 
   const at = (path: string) => `${host.home}/${me.workspace.slug}/${path}`
   return {
     settings: !workspaceDoor(me.can) && workspaceDoor([...me.can, ...off]) ? at('settings') : null,
-    invite: !me.can.includes('people.invite') && off.includes('people.invite') ? at('members') : null,
+    invite: inviteAway(me, `/${me.workspace.slug}/members`),
   }
+}
+
+/**
+ * Inviting, where a workspace's own domain keeps it shut and the person's
+ * role allows it at usetuff.com: `path` there — Members, or a project's
+ * settings for its Invite someone new. Null anywhere else.
+ */
+export function inviteAway(me: { can: readonly string[]; can_off_host?: readonly string[] | undefined }, path: string): string | null {
+  const host = onHost()
+  if (!host || me.can.includes('people.invite') || !(me.can_off_host ?? []).includes('people.invite')) return null
+  return `${host.home}${path}`
 }
