@@ -2750,6 +2750,38 @@ test("a person's numbers fold to one line and stay folded", async ({ page }) => 
   await expect(page.locator('[data-stats-body]')).not.toHaveAttribute('aria-hidden', 'true')
 })
 
+test('My Tasks opens with its numbers from last time, before the server answers', async ({ page }) => {
+  await login(page)
+  /* Something on this person to count: a task of their own. */
+  await page.evaluate(async () => {
+    const s = JSON.parse(localStorage.getItem('session') ?? '{}') as { access_token?: string }
+    const h = { authorization: `Bearer ${s.access_token}`, 'x-api-version': '1', 'content-type': 'application/json' }
+    const { actor } = (await (await fetch('/api/me', { headers: h })).json()) as { actor: { id: string } }
+    const { projects } = (await (await fetch('/api/projects', { headers: h })).json()) as { projects: { id: string }[] }
+    await fetch(`/api/projects/${projects[0]!.id}/tasks`, {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ title: 'Count me', assignee_ids: [actor.id] }),
+    })
+  })
+  /* Signing in lands on My Tasks, read before the task was made: read again. */
+  await page.getByTestId('nav-my').click()
+  await page.reload()
+  const stats = page.locator('[data-person-stats]')
+  await expect(stats).toBeVisible({ timeout: 15_000 })
+  /* Kept on the disk — written a second after the answer (`memory.ts`) —
+     then start again with the person's numbers held back: they come from
+     last time, with the list. */
+  await page.waitForTimeout(1500)
+  await page.route('**/api/people/**', async (route) => {
+    await new Promise((r) => setTimeout(r, 4000))
+    await route.continue().catch(() => {})
+  })
+  await page.reload()
+  await expect(stats).toBeVisible({ timeout: 2000 })
+  await expect(page.locator('[data-mine]').first()).toBeVisible()
+})
+
 test('somebody is put on a project from their own page', async ({ page }) => {
   await login(page)
   await page.getByTestId('nav-members').click()

@@ -154,11 +154,15 @@ export function MyTasks({
      you" is a good thing to read and a bad thing to read by mistake. */
   /* Your own numbers and weeks, the ones your page in Members shows —
      kept, so they are there with the list. */
-  const [mineRead, setMineRead] = useState<PersonRead | null>(() => recall(`person:${meId}`))
+  /* Kept under `my:stats` as well: `person:` is one thing's answer, which a
+     start does not read back off the disk (`hydrate`, light), so the list
+     came back at once from last time and the numbers over it waited for
+     the server — the whole block held, then drawn late. */
+  const [mineRead, setMineRead] = useState<PersonRead | null>(() => recall(`person:${meId}`) ?? recall(`my:stats:${meId}`))
   const [settled, setSettled] = useState(mineRead !== null)
   useEffect(() => {
     void readPerson(meId, true)
-      .then(setMineRead)
+      .then((r) => setMineRead(remember(`my:stats:${meId}`, r)))
       .catch(() => {})
       .finally(() => setSettled(true))
   }, [meId])
