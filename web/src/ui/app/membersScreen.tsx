@@ -371,8 +371,8 @@ function OutInvite({
     setBusy(true)
     setSaid(null)
     try {
-      const r = await api<{ id: string; token: string; mailed: boolean }>(`/invites/${i.id}/resend`, { method: 'POST' })
-      if (r.token) await navigator.clipboard?.writeText(linkOf(r.token)).catch(() => undefined)
+      const r = await api<{ id: string; token: string; mailed: boolean; host?: string }>(`/invites/${i.id}/resend`, { method: 'POST' })
+      if (r.token) await navigator.clipboard?.writeText(linkOf(r.token, r.host)).catch(() => undefined)
       const now = r.token ? W.newLinkCopied : r.mailed ? W.sentAgain : W.couldntSendAgain
       told.set(r.id, now)
       setSaid(now)
@@ -404,7 +404,7 @@ function OutInvite({
             className={i.send_again ? 'shrink-0 text-xs text-accent' : quiet}
             onClick={() => void again()}
           >
-            {i.send_again ? W.sendAgain : i.email ? W.resend : W.copyNewLink}
+            {i.send_again && i.email ? W.sendAgain : i.email ? W.resend : W.copyNewLink}
           </button>
           <button data-testid="revoke-invite" className={quiet} onClick={() => void onRevoke()}>
             {W.revoke}
@@ -412,7 +412,7 @@ function OutInvite({
         </span>
         <span data-invite-said={said ? '' : undefined} className="truncate text-badge text-ink-3">
           {said ??
-            (i.send_again ? W.linkStopped : null) ??
+            (i.send_again ? (i.email ? W.linkStopped : W.linkStoppedCopy) : null) ??
             [
               i.role === 'owner' ? W.owner : W.member,
               i.project_ids.length

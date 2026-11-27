@@ -161,8 +161,10 @@ export function HandedLinks({ handed }: { handed: { email: string; link: string 
   )
 }
 
-/** The link an invitation answer carries, when it carries one. */
-export const linkOf = (token: string) => `${location.origin}/invite/${token}`
+/** The link an invitation answer carries, when it carries one: at the
+    workspace's own domain when the server bound it there (`host`),
+    else this server's own address. */
+export const linkOf = (token: string, host?: string | undefined) => `${host ? `https://${host}` : location.origin}/invite/${token}`
 
 function Part({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -262,7 +264,7 @@ export function useInvite({ projects, owner, onClose, onMade, onto: from = [], a
     setBusy(true)
     try {
       const r = await api<InviteMade>('/invites', { method: 'POST', body: JSON.stringify(body()) })
-      setLink(`${location.origin}/invite/${r.token}`)
+      setLink(linkOf(r.token, r.host))
       onMade()
     } catch (e) {
       const why = (e as Error).message || W.linkNotMade
