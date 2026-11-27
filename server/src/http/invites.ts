@@ -14,6 +14,7 @@ import { asAuth, withActor, withoutActor } from '../db.js'
 import { allow, type AuthContext } from '../auth/context.js'
 import { generateToken, hashToken, hashPassword } from '../auth/crypto.js'
 import { checkedNow, confirmed, credentials, startSession, takeInvite, type Session } from '../auth/flows.js'
+import { hostOf } from '../host.js'
 import { tellInviter } from '../notify.js'
 import { heard, languageFor, one, say } from '../words.js'
 
@@ -40,6 +41,30 @@ export function isForAnotherAddress(e: unknown): boolean {
 export const FOR_ANOTHER_ADDRESS = {
   error: { code: 'wrong_email', message: 'This invitation is for a different email address.' },
 } as const
+
+/** Taken only on the workspace's own domain it was mailed to — migration 328. */
+export const ON_HOST = {
+  error: { code: 'invite_on_host', message: 'Accept this invitation from the link in its email.' },
+} as const
+
+/**
+ * Where an invitation is taken, as its preview says.
+ * One mailed to a workspace's own domain
+ * is taken there and nowhere else: read anywhere but through that domain,
+ * its preview names the host to go to while it answers, and says the link
+ * no longer works once it does not. Anything else is answered as it was.
+ */
+export async function placed<T extends { state: string }>(
+  c: Context,
+  hash: string,
+  row: T,
+): Promise<(T & { host?: string }) | { state: 'invalid' }> {
+  if (row.state !== 'open') return row
+  const [p] = await withoutActor((tx) => tx<{ mailed_domain: string | null }[]>`select mailed_domain from invite_place(${hash})`)
+  if (!p?.mailed_domain || hostOf(c)?.domainId === p.mailed_domain) return row
+  const [d] = await withoutActor((tx) => tx<{ hostname: string }[]>`select hostname from host_domain(${p.mailed_domain})`)
+  return d ? { ...row, host: d.hostname } : { state: 'invalid' }
+}
 
 /**
  * Invites by link.
@@ -412,7 +437,7 @@ async function mailInvite(
   inv: { id: string; email: string; project_ids: string[]; ttl_hours: number },
   token: string,
 ): Promise<boolean> {
-  const [who, projects, brand] = await withActor(
+  const [who, projects, brand, own] = await withActor(
     ctx.actorId,
     ctx.workspaceId,
     async (tx) =>
@@ -438,9 +463,25 @@ async function mailInvite(
         /* The workspace's own name in Tuff's place, where its plan wears
            it. */
         await brandHere(tx, ctx.workspaceId),
+        /* Its own domain, connected on a branded plan, read from the row now:
+           the invitation is the workspace's letter, and is taken there. */
+        edition.hosts ? await edition.hosts.domainOf(tx, ctx.workspaceId) : null,
       ] as const,
   )
-  const url = `${origin(c)}/invite/${encodeURIComponent(token)}`
+  /* Bound to that host before its link leaves this server: taken nowhere
+     else, usetuff.com included (migration 328). Not bound, not sent — a
+     token on its way to a name somebody else's DNS decides must be good
+     only there. */
+  if (own) {
+    const [bound] = await asAuth((tx) => tx<{ ok: boolean }[]>`select auth_invite_bind(${hashToken(token)}, ${own.id}::uuid) as ok`).catch(
+      () => [],
+    )
+    if (!bound?.ok) {
+      console.error(`[invites] invitation ${inv.id} could not be bound to its workspace's domain: not sent`)
+      return false
+    }
+  }
+  const url = `${own ? `https://${own.hostname}` : origin(c)}/invite/${encodeURIComponent(token)}`
   const days = Math.round(inv.ttl_hours / 24) || 1
   /*
    * Nothing anybody typed in the subject, and the sender's own address
@@ -539,6 +580,8 @@ invites.get('/invite/:token', async (c) => {
       select * from preview_invite(${hash})`,
   )
   if (!row || row.state === 'revoked') return c.json({ state: 'invalid' })
+  const where = await placed(c, hash, row)
+  if (where.state === 'invalid' || 'host' in where) return c.json(where)
   const [seen, me, { email }, brand] = await Promise.all([
     withActor(ctx.actorId, ctx.workspaceId, (tx) => tx<{ workspace_id: string; member: boolean }[]>`select * from invite_for_me(${hash})`),
     withActor(ctx.actorId, ctx.workspaceId, (tx) => tx<{ name: string }[]>`select name from actor where id = ${ctx.actorId}`),
@@ -571,6 +614,7 @@ export async function joinAsMe(c: Context<{ Variables: Vars }>) {
      person's word (`password-after-proof.md`) is joined by it. */
   const took = await takeInvite(hashToken(c.req.param('token') ?? ''), ctx.actorId, true)
   if (took === 'elsewhere') return c.json(FOR_ANOTHER_ADDRESS, 403)
+  if (took === 'on_host') return c.json(ON_HOST, 403)
   /* A session for an address nobody proved — a link with no address,
      followed with somebody's — takes no invitation as that address: */
   if (took === 'unconfirmed') {
@@ -610,13 +654,23 @@ publicInvites.get('/invite/:token', async (c) => {
   if (!row || row.state === 'revoked') {
     return c.json({ state: 'invalid' })
   }
+  /* Mailed to a workspace's own domain: the host to go to, or nothing. */
+  const where = await placed(c, hashToken(c.req.param('token')), row)
+  if (where.state === 'invalid') return c.json(where)
   /* The workspace's own mark above "Join", where its plan wears it. */
   const brand =
     edition.brands && row.state === 'open' ? await withoutActor((tx) => brandOfInvite(tx, hashToken(c.req.param('token')))) : null
-  return c.json({ ...row, brand })
+  return c.json({ ...where, brand })
 })
 
 publicInvites.post('/invite/:token/accept', async (c) => {
+  /* Through a workspace's own domain: never a password — the letter's proof
+     or the host's code, decided by the edition. A host is only
+     ever set by the edition that has hosts. */
+  const host = hostOf(c)
+  if (host) {
+    return edition.hosts ? edition.hosts.acceptInvite(c, host, c.req.param('token')) : c.json({ error: { code: 'not_found' } }, 404)
+  }
   const body = z
     .object({
       name: z.string().min(1).max(200),
@@ -640,6 +694,10 @@ publicInvites.post('/invite/:token/accept', async (c) => {
   if (open?.state !== 'open') {
     return c.json({ error: { code: 'not_found', message: 'This link is no longer valid.' } }, 404)
   }
+  /* And before any password too: one mailed to a workspace's own domain is
+     taken there, never here. `accept_invite` refuses it as well. */
+  const where = await placed(c, hashToken(c.req.param('token')), open)
+  if (where.state !== 'open' || 'host' in where) return c.json(ON_HOST, 403)
 
   /*
    * An email that already has an account joins as that account — and only
@@ -711,6 +769,8 @@ publicInvites.post('/invite/:token/accept', async (c) => {
     /* A link handed over by hand, taken with another address — given back
        unspent, for the person it names (migration 210). */
     if (isForAnotherAddress(e)) return c.json(FOR_ANOTHER_ADDRESS, 403)
+    /* Mailed to a workspace's own domain, and taken only there (328). Given back unspent. */
+    if ((e as { message?: string }).message?.includes('invite_on_host')) return c.json(ON_HOST, 403)
     /* No account when we looked, one by the time the invitation was taken
        — a sign-up racing this request. The invitation is given back and no
        session is made: nobody checked a password for that account. Said as

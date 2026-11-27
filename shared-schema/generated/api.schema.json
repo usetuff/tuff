@@ -4554,6 +4554,12 @@
             "string",
             "null"
           ]
+        },
+        "can_off_host": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -7539,6 +7545,9 @@
               "type": "null"
             }
           ]
+        },
+        "host": {
+          "type": "string"
         }
       },
       "required": [
@@ -7579,6 +7588,9 @@
               "type": "null"
             }
           ]
+        },
+        "host": {
+          "type": "string"
         },
         "you": {
           "type": "object",

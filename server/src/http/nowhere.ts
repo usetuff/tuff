@@ -13,7 +13,7 @@ import { fullRefusal } from '../ceilings.js'
 import { makeWorkspace, workspaceAddress } from './workspaces.js'
 import { deleteAccount } from './yourdata.js'
 import { confirmAddress, inboxCode } from './address.js'
-import { joinAsMe } from './invites.js'
+import { joinAsMe, ON_HOST, placed } from './invites.js'
 import { hashToken } from '../auth/crypto.js'
 import { sessionFor, unconfirmedAnswer, unconfirmedList } from './confirming.js'
 
@@ -179,6 +179,7 @@ nowhere.post(
     /* Join, pressed on No workspaces. */
     const took = await takeInvite(row.token_hash, who.actorId, true)
     if (took === 'full') return c.json(fullRefusal('invited'), 413)
+    if (took === 'on_host') return c.json(ON_HOST, 403)
     if (typeof took === 'string') return c.json({ error: { code: 'not_found', message: 'This invitation is no longer valid.' } }, 404)
     const session = await startSession(who.actorId, took.workspaceId, { ...metaOf(c), since: who.ctx.checkedAt ?? null }, 'invite')
     await endNowhere(who)
@@ -216,6 +217,9 @@ nowhere.get(
         select * from preview_invite(${hash})`,
     )
     if (!row || row.state === 'revoked') return c.json({ state: 'invalid' })
+    /* Mailed to a workspace's own domain: the host to go to, or nothing. */
+    const where = await placed(c, hash, row)
+    if (where.state === 'invalid' || 'host' in where) return c.json(where)
     /* The workspace's own mark, where its plan wears it. */
     const brand = edition.brands && row.state === 'open' ? await withoutActor((tx) => brandOfInvite(tx, hash)) : null
     return c.json({ ...row, brand, you: { name: who.person.name, email: who.person.email }, member: false })

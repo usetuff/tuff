@@ -30,6 +30,8 @@ export const AUTH_DEFINERS = [
   'auth_identity_forget',
   'auth_identity_link',
   'auth_identity_remove',
+  /* 328: an invitation bound to the workspace's own domain before its letter goes. */
+  'auth_invite_bind',
   'auth_invite_delivered',
   'auth_lookup_user',
   /* 315: Join or Leave a workspace joined before the proof. */
@@ -64,6 +66,8 @@ export const AUTH_DEFINERS = [
   'digest_off',
   'github_person_retoken',
   'github_person_token',
+  /* 328: a code asked beside an invitation on a host. */
+  'host_code_ask',
   'host_code_live',
   'host_code_make',
   'host_code_spend',

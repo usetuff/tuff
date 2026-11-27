@@ -20,7 +20,7 @@ import { COMMIT, VERSION } from '../version.js'
 import { chose } from '../presence.js'
 import { cookieHeaders, faced, linkFor, FILE_COOKIE, fileCookie, put, readFileCookie, whereBytesGo, whereLinksGo } from '../storage.js'
 import { brandHere } from '../brand.js'
-import { UNPROVED, authenticate, allow, allowedActions, planSaid, type AuthContext } from '../auth/context.js'
+import { UNPROVED, authenticate, allow, allowedActions, offHostActions, planSaid, type AuthContext } from '../auth/context.js'
 import { agentsHeld } from '../ceilings.js'
 import {
   signUp,
@@ -655,7 +655,7 @@ app.use('/api/*', async (c, next) => {
      account rather than the workspace: the password, the address, the
      second factor, the devices signed in, the ways in, an agent's
      connection, the account's data and its deletion — wherever it is used. */
-  if (ctx.host && (ACCOUNT_ONLY.test(c.req.path) || (c.req.method !== 'GET' && SENT_OUT.test(c.req.path))))
+  if (ctx.host && !inviteOnItsHost(c) && (ACCOUNT_ONLY.test(c.req.path) || (c.req.method !== 'GET' && SENT_OUT.test(c.req.path))))
     return c.json(NOT_ON_A_HOST, 403)
   /* A token held back by the edition does nothing, and says why, to the
      agent holding it — which says it to the person. On your own server,
@@ -676,6 +676,14 @@ const ACCOUNT_ONLY =
 /* And, from a project, a link that sends its work out of the workspace — a
    Slack channel, a GitHub repository — made or taken away. */
 const SENT_OUT = /^\/api\/projects\/[^/]+\/(slack|github)$/
+/*
+ * But one invitation's preview, read on the host itself: the host's
+ * allow-list has already matched it to the host's workspace, and found it
+ * open (`cloud/domains/hosts.ts`). Only reading — so a member who follows
+ * their own link is shown the way in; joining as oneself stays the
+ * account's, refused here.
+ */
+const inviteOnItsHost = (c: Context) => c.req.method === 'GET' && hostOf(c) !== null && /^\/api\/invite\/[^/]+$/.test(c.req.path)
 const NOT_ON_A_HOST = {
   error: { code: 'not_on_a_host', message: 'Open Tuff at usetuff.com to change this.' },
 } as const
@@ -817,6 +825,11 @@ app.get('/api/me', async (c) => {
     settings: ctx.settings,
     via_mcp: ctx.viaMcp,
     can: allowedActions(ctx, { inProject: true, isAuthor: true }),
+    /* On a host's session, what the person's role allows at usetuff.com and
+       this session may not do — so the app can point there rather than
+       hide it. Worked out here,
+       never by the page. */
+    ...(ctx.host ? { can_off_host: offHostActions(ctx, { inProject: true, isAuthor: true }) } : {}),
     /* The server's version and a newer release, for its owners alone, so
        the bar can mark a security release on their face — `updates.ts`.
        Absent for everybody else, and always on the service, where

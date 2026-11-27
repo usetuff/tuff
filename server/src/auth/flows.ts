@@ -887,7 +887,7 @@ export async function takeInvite(
   /** The person pressed Join on the invitation's own page — only that
       confirms a workspace waiting for their word (migration 315). Anything else finds it `gone`. */
   pressed = false,
-): Promise<{ workspaceId: string } | 'gone' | 'full' | 'elsewhere' | 'unconfirmed'> {
+): Promise<{ workspaceId: string } | 'gone' | 'full' | 'elsewhere' | 'unconfirmed' | 'on_host'> {
   const [u] = await asAuth((tx) => tx<{ email: string | null }[]>`select auth_email_of(${actorId}) as email`)
   if (!u?.email) return 'gone'
   if (!(await confirmed(actorId))) return 'unconfirmed'
@@ -908,6 +908,9 @@ export async function takeInvite(
     /* The workspace waits for the person's own Join, and this was not it.
        Left unspent. */
     if ((e as { message?: string }).message?.includes('membership_waiting')) return 'gone'
+    /* Mailed to a workspace's own domain, and taken only there (migration
+       328). Left unspent, for the link in its letter. */
+    if ((e as { message?: string }).message?.includes('invite_on_host')) return 'on_host'
     throw e
   }
 }

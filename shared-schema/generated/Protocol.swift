@@ -3235,6 +3235,7 @@ public enum API {
     public struct InviteForMe: Codable, Sendable {
         public let brand: Brand?
         public let email: String?
+        public let host: String?
         public let member: Bool?
         public let role: String?
         public let state: String
@@ -3243,15 +3244,16 @@ public enum API {
         public let you: You?
 
         public enum CodingKeys: String, CodingKey {
-            case brand, email, member, role, state
+            case brand, email, host, member, role, state
             case workspaceID = "workspace_id"
             case workspaceName = "workspace_name"
             case you
         }
 
-        public init(brand: Brand?, email: String?, member: Bool?, role: String?, state: String, workspaceID: String?, workspaceName: String?, you: You?) {
+        public init(brand: Brand?, email: String?, host: String?, member: Bool?, role: String?, state: String, workspaceID: String?, workspaceName: String?, you: You?) {
             self.brand = brand
             self.email = email
+            self.host = host
             self.member = member
             self.role = role
             self.state = state
@@ -3335,18 +3337,21 @@ public enum API {
     // MARK: - InvitePreview
     public struct InvitePreview: Codable, Sendable {
         public let brand: Brand?
-        public let email, role: String?
+        public let email: String?
+        public let host: String?
+        public let role: String?
         public let state: String
         public let workspaceName: String?
 
         public enum CodingKeys: String, CodingKey {
-            case brand, email, role, state
+            case brand, email, host, role, state
             case workspaceName = "workspace_name"
         }
 
-        public init(brand: Brand?, email: String?, role: String?, state: String, workspaceName: String?) {
+        public init(brand: Brand?, email: String?, host: String?, role: String?, state: String, workspaceName: String?) {
             self.brand = brand
             self.email = email
+            self.host = host
             self.role = role
             self.state = state
             self.workspaceName = workspaceName
@@ -3563,6 +3568,7 @@ public enum API {
     public struct Me: Codable, Sendable {
         public let actor: MeActor
         public let can: [String]
+        public let canOffHost: [String]?
         public let host: String?
         public let plan: String?
         public let role: String
@@ -3572,14 +3578,17 @@ public enum API {
         public let workspace: MeWorkspace
 
         public enum CodingKeys: String, CodingKey {
-            case actor, can, host, plan, role, server, settings
+            case actor, can
+            case canOffHost = "can_off_host"
+            case host, plan, role, server, settings
             case viaMCP = "via_mcp"
             case workspace
         }
 
-        public init(actor: MeActor, can: [String], host: String?, plan: String?, role: String, server: ServerVersion?, settings: Settings?, viaMCP: Bool?, workspace: MeWorkspace) {
+        public init(actor: MeActor, can: [String], canOffHost: [String]?, host: String?, plan: String?, role: String, server: ServerVersion?, settings: Settings?, viaMCP: Bool?, workspace: MeWorkspace) {
             self.actor = actor
             self.can = can
+            self.canOffHost = canOffHost
             self.host = host
             self.plan = plan
             self.role = role

@@ -2396,6 +2396,7 @@ enum class Role(val value: String) {
 data class InviteForMe (
     val brand: Brand? = null,
     val email: String? = null,
+    val host: String? = null,
     val member: Boolean? = null,
     val role: String? = null,
     val state: String,
@@ -2459,6 +2460,7 @@ data class InviteMade (
 data class InvitePreview (
     val brand: Brand? = null,
     val email: String? = null,
+    val host: String? = null,
     val role: String? = null,
     val state: String,
 
@@ -2590,6 +2592,10 @@ data class ListsInProject (
 data class Me (
     val actor: MeActor,
     val can: List<String>,
+
+    @SerialName("can_off_host")
+    val canOffHost: List<String>? = null,
+
     val host: String? = null,
     val plan: String? = null,
     val role: String,

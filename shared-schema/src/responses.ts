@@ -693,6 +693,10 @@ export const Me = z.object({
   /** The workspace's own domain this session was made on, when it was.
       Such a session sees this workspace only. */
   host: z.string().nullable().optional(),
+  /** On such a session, what the person's role allows at usetuff.com that
+      the host refuses (`NEVER_ON_A_HOST`), so a client can point there
+      instead of hiding it. Strings, as `can` is. */
+  can_off_host: z.array(z.string()).optional(),
 })
 
 /** `GET /api/projects`. */
@@ -2077,6 +2081,9 @@ export const InvitePreview = z.object({
   /** The workspace's mark above "Join", where its plan wears one and the
       invitation is still `open`. */
   brand: Brand.nullable().optional(),
+  /** The workspace's own domain this invitation was mailed to and is taken
+      on, read anywhere else: go there. */
+  host: z.string().optional(),
 })
 export type InvitePreview = z.infer<typeof InvitePreview>
 /** The same invitation, seen while signed in — `GET /api/invite/:token`. */

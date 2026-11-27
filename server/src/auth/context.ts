@@ -444,3 +444,16 @@ export function allowIn(
 export function allowedActions(ctx: AuthContext, about: Partial<PermissionInput> = {}): z.infer<typeof Action>[] {
   return Action.options.filter((a) => allow(ctx, a, about))
 }
+
+/**
+ * On a session made on a workspace's own domain, what the same person may
+ * do at usetuff.com and this session may not — `NEVER_ON_A_HOST` and
+ * nothing else, since `can()` is asked twice with every other input the
+ * same. Empty off a host. For the app to point to usetuff.com where it
+ * would otherwise hide a door; every endpoint still decides.
+ */
+export function offHostActions(ctx: AuthContext, about: Partial<PermissionInput> = {}): z.infer<typeof Action>[] {
+  if (!ctx.host) return []
+  const { host: _onIt, ...off } = ctx
+  return Action.options.filter((a) => !allow(ctx, a, about) && allow(off, a, about))
+}

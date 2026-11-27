@@ -1,7 +1,8 @@
-import type { Hono } from 'hono'
+import type { Context, Hono } from 'hono'
 import type { UpgradeWebSocket, WSContext } from 'hono/ws'
 import type postgres from 'postgres'
 import type { Tx } from './db.js'
+import type { Host } from './host.js'
 
 /*
  * What an edition says.
@@ -92,6 +93,12 @@ export type Hosts = {
       for none. Read under the policies in a request, by the worker's own
       function in the worker. */
   originOf(tx: Tx, workspaceId: string): Promise<string | null>
+  /** The same domain with its id, read under the policies — what an
+      invitation's letter links to and is bound to. */
+  domainOf(tx: Tx, workspaceId: string): Promise<{ id: string; hostname: string } | null>
+  /** `POST /auth/invite/:token/accept` through a host: never a password —
+      the letter's proof or the host's code. */
+  acceptInvite(c: Context, host: Host, token: string): Promise<Response>
   /** A connected, branded domain by the id the server sealed into a
       provider's start: where its ticket may go. */
   byId(domainId: string): Promise<{ hostname: string; workspaceId: string } | null>

@@ -1084,6 +1084,9 @@ export async function joinByProvider(
       /* A link handed over by hand, and the provider's address is not the
          one it names (migration 210). */
       if ((e as { message?: string }).message?.includes('invite_for_another_address')) return 'elsewhere'
+      /* Mailed to a workspace's own domain: taken there, by its code, never
+         here (migration 328). Left unspent. */
+      if ((e as { message?: string }).message?.includes('invite_on_host')) return 'gone'
       throw e
     }
   }
