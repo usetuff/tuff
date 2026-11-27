@@ -3058,12 +3058,19 @@ aside[data-moving] > [data-fluid] {
  * Inter for a computer that has it, never downloads this. Latin only; the
  * licences are beside the files.
  */
+/*
+ * Inter waits to be drawn (`block`) rather than swapping in: the page
+ * preloads it, so it is there by the first paint, and a first paint in the
+ * fallback face drew the hero's line smaller than the same line drawn
+ * again when the script took over the page — which the browser counted as
+ * a second, later "largest paint" (2.4 s instead of 1.5 on a slow phone).
+ */
 @font-face {
   font-family: 'Tuff Inter';
   src: url('/landing/fonts/inter-latin.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: 'Geist Mono';
@@ -3186,6 +3193,239 @@ aside[data-moving] > [data-fluid] {
   --lp-lift-small: 0 0 0 1px rgba(255, 255, 255, 0.08);
   --lp-code: #0e0e10;
   --lp-hatch: rgba(255, 255, 255, 0.04);
+}
+/*
+ * The hero's sky. A dark planet under
+ * the board with orbits drawn across it, and one glow wrapped round the
+ * board's top and shoulders, running orange and pink through violet and
+ * blue to green, as if the product were lit from inside. All of it
+ * behind the board, which is opaque, so it shows at the board's
+ * shoulders and above it.
+ *
+ * It moves, slowly: the glow is pools of colour drifting and stretching
+ * on their own clocks, fifteen to twenty-five seconds a loop. The planet
+ * and its orbits hold still: an SVG's parts fading repaint all of it every
+ * frame. Transform and opacity only.
+ * Reduced motion holds it still.
+ */
+/* The glow's box: it fades out on every side, so it has no edge
+   anywhere, and the pools inside it mix where they overlap. */
+.lp-halo {
+  -webkit-mask-image:
+    radial-gradient(50% 100% at 50% 100%, #000 45%, transparent 100%),
+    linear-gradient(to top, transparent, #000 240px);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(50% 100% at 50% 100%, #000 45%, transparent 100%),
+    linear-gradient(to top, transparent, #000 240px);
+  mask-composite: intersect;
+  transform: translateX(-50%);
+}
+.lp-blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+/* Off screen, a band's motion stops — `useReveal` in `Site.tsx` says
+   when. */
+[data-lp-still]::before,
+[data-lp-still]::after,
+[data-lp-still] *,
+[data-lp-still] *::before,
+[data-lp-still] *::after {
+  animation-play-state: paused !important;
+}
+/* The brighter dots, on the ground's own grid (`DOTS` in `Site.tsx`). */
+.lp-twinkle {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.85) 1px, transparent 1px);
+  background-size: 16px 16px;
+  opacity: 0;
+  animation: lp-twinkle ease-in-out infinite alternate;
+}
+@keyframes lp-twinkle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/*
+ * A beam round the raised plan: a short run of the hero's colours that
+ * travels the cell's edge. A conic gradient turning behind a ring-shaped
+ * mask — only the turn moves. The soft copy is wider and blurred, the
+ * light the beam throws on the card.
+ */
+.lp-beam {
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.lp-beam-soft {
+  padding: 8px;
+  filter: blur(8px);
+  opacity: 0.55;
+}
+.lp-beam > span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(300%, 900px);
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 240deg,
+    #ff7a45 270deg,
+    #ec4899 295deg,
+    #a855f7 318deg,
+    #3b82f6 338deg,
+    #22d3ee 354deg,
+    transparent 360deg
+  );
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: lp-beam 7s linear infinite;
+}
+@keyframes lp-beam {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+/* A spark: a white speck that rises a little way and goes out. */
+.lp-spark {
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  animation: lp-spark ease-out infinite;
+}
+@keyframes lp-spark {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(16px, -140px);
+  }
+}
+/*
+ * The landing's other dark bands keep a little of the hero's light: a
+ * soft wash along the top and the foot, violet and blue and teal, that
+ * breathes slowly. Under the band's content (`isolation` makes -1 the
+ * layer just over its ground) and inside its edges, so nothing spills.
+ */
+.lp-band-glow {
+  position: relative;
+  isolation: isolate;
+}
+.lp-band-glow::before,
+.lp-band-glow::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  height: min(320px, 50%);
+  pointer-events: none;
+  animation: lp-band-breathe 12s ease-in-out infinite alternate;
+}
+.lp-band-glow::before {
+  top: 0;
+  background:
+    radial-gradient(30% 100% at 22% 0%, rgba(168, 85, 247, 0.24), transparent 70%),
+    radial-gradient(30% 100% at 50% 0%, rgba(59, 130, 246, 0.22), transparent 70%),
+    radial-gradient(30% 100% at 78% 0%, rgba(34, 211, 238, 0.18), transparent 70%);
+}
+.lp-band-glow::after {
+  bottom: 0;
+  background:
+    radial-gradient(30% 100% at 24% 100%, rgba(236, 72, 153, 0.18), transparent 70%),
+    radial-gradient(30% 100% at 52% 100%, rgba(99, 102, 241, 0.18), transparent 70%),
+    radial-gradient(30% 100% at 80% 100%, rgba(52, 211, 153, 0.16), transparent 70%);
+  animation-delay: -6s;
+}
+@keyframes lp-band-breathe {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* The frame round the board: a thin lit edge all the way round, brighter
+   along the top where the light comes from, and a faint pane of glass in
+   the eight pixels between it and the board. */
+.lp-aurora-edge {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+}
+@keyframes lp-liquid-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1, 1) rotate(0deg);
+  }
+  25% {
+    transform: translate(14%, -10%) scale(1.25, 0.85) rotate(18deg);
+  }
+  50% {
+    transform: translate(-6%, -18%) scale(0.85, 1.2) rotate(-10deg);
+  }
+  75% {
+    transform: translate(-14%, 6%) scale(1.15, 1) rotate(8deg);
+  }
+}
+@keyframes lp-liquid-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1, 1) rotate(0deg);
+  }
+  33% {
+    transform: translate(-16%, -8%) scale(0.8, 1.15) rotate(-20deg);
+  }
+  66% {
+    transform: translate(10%, -14%) scale(1.3, 0.9) rotate(14deg);
+  }
+}
+@keyframes lp-liquid-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1, 1) rotate(0deg);
+  }
+  20% {
+    transform: translate(8%, 10%) scale(1.15, 0.8) rotate(12deg);
+  }
+  55% {
+    transform: translate(18%, -12%) scale(0.9, 1.25) rotate(-16deg);
+  }
+  80% {
+    transform: translate(-10%, -6%) scale(1.2, 1.05) rotate(6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-blob,
+  .lp-beam > span,
+  .lp-band-glow::before,
+  .lp-band-glow::after,
+  .lp-spark,
+  .lp-twinkle {
+    animation: none;
+  }
 }
 [data-lp-tone='light'] {
   --lp-bg: #ffffff;

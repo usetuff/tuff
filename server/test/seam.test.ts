@@ -12,12 +12,12 @@ import { fileURLToPath } from 'node:url'
  * nothing else in the core reaches into a `cloud/` folder: one import
  * from `routes.ts` straight into one and the edition does
  * not compile. So every file outside `cloud/` is read here, and any import
- * that lands inside one is named — except from `edition.ts` and
- * `edition.tsx`, which are the one door.
+ * that lands inside one is named — except from `edition.ts`,
+ * `edition.tsx` and `edition.front.tsx`, which are the doors.
  */
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const TREES = ['server/src', 'server/test', 'server/scripts', 'web/src', 'web/test', 'web/scripts', 'shared-schema/src', 'e2e', 'scripts']
-const DOORS = new Set(['server/src/edition.ts', 'web/src/edition.tsx'])
+const DOORS = new Set(['server/src/edition.ts', 'web/src/edition.tsx', 'web/src/edition.front.tsx'])
 
 function walk(dir: string, out: string[] = []): string[] {
   let names: string[]
@@ -50,5 +50,5 @@ test('nothing outside a cloud folder imports from one, but the edition', () => {
       }
     }
   }
-  assert.deepEqual(crossings, [], 'only edition.ts and edition.tsx may import from a cloud/ folder')
+  assert.deepEqual(crossings, [], 'only edition.ts, edition.tsx and edition.front.tsx may import from a cloud/ folder')
 })

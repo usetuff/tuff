@@ -19,12 +19,17 @@ offline fails the way a change fails when the server refuses it. Queuing
 writes to send later is a different thing — an order of operations, a
 merge, a way back — and it is the part the rebuild removed. It is not done here.
 
-**The files.** `public/sw.js` keeps the page and the two hashed bundles it
-names. The page is fetched from the network first, every time — a deploy
-is seen on the next load — and the kept copy is used only when the network
-does not answer within four seconds. A bundle never changes under its
-name, so the kept one is the file. What the old page named that the new
-one does not is deleted, so one version of the app is kept, not every one.
+**The files.** `public/sw.js` keeps the page and every hashed file of its
+build, found by following what each bundle says it loads: the page names
+its entry, and the entry names the app and every screen fetched later.
+The app is not inside the entry since the landing stopped downloading it,
+so keeping only what the page named left
+the app out, and a window opened offline was a blank page. The page is
+fetched from the network first, every time — a deploy is seen on the next
+load — and the kept copy is used only when the network does not answer
+within four seconds. A bundle never changes under its name, so the kept
+one is the file. What the old build had that the new one does not is
+deleted, so one version of the app is kept, not every one.
 `/api`, `/auth` and the socket are never touched by the worker.
 
 **The answers.** `remember()` also writes to IndexedDB, a second after the

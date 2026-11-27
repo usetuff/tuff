@@ -10,8 +10,6 @@ import type { WebEdition } from './editionShape.js'
  * owner of this server.
  */
 export const edition: WebEdition = {
-  page: () => null,
-  boot: () => {},
   beforeApp: async () => false,
   returnTo: () => null,
   newWorkspaceCeiling: null,

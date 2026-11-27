@@ -2,7 +2,7 @@
  * The service worker: a notification, and the app's own files.
  *
  * Push is the push spec. The files are `docs/specs/offline.md`: the
- * page and its two hashed bundles are kept, so a window opened with no
+ * page and its build's hashed files are kept, so a window opened with no
  * connection is the app — drawing what this device last loaded — rather
  * than the browser's "You're offline".
  *
@@ -18,23 +18,40 @@
 const SHELL = 'shell-v3'
 
 /*
- * The page, and every file it names under `/assets/`. Read from the page
- * rather than listed, because the names change with every build — and
- * whatever the old page named that the new one does not is thrown away, so
- * the cache holds one version of the app and not every one ever deployed.
+ * The page, and every file of its build under `/assets/`. Found by
+ * following the bundles' own lists of what they load rather than listed,
+ * because the names change with every build: the page names its entry, and
+ * the entry names the app and every screen fetched later — which have to
+ * be kept too, since the app is no longer inside the entry (the landing
+ * loads without it). Whatever the old build had
+ * that this one does not is thrown away, so the cache holds one version of
+ * the app and not every one ever deployed.
  */
 async function keepShell(page) {
   const cache = await caches.open(SHELL)
   const html = await page.clone().text()
   await cache.put('/', page)
-  const wanted = new Set(html.match(/\/assets\/[^"'\s)]+/g) ?? [])
-  await Promise.all(
-    [...wanted].map(async (path) => {
-      if (await cache.match(path, { ignoreVary: true })) return
-      const res = await fetch(path)
-      if (res.ok) await cache.put(path, res)
-    }),
-  )
+  const wanted = new Set()
+  let next = html.match(/\/assets\/[^"'\s)]+/g) ?? []
+  while (next.length) {
+    const found = []
+    await Promise.all(
+      next.map(async (path) => {
+        if (wanted.has(path)) return
+        wanted.add(path)
+        let res = await cache.match(path, { ignoreVary: true })
+        if (!res) {
+          const got = await fetch(path)
+          if (!got.ok) return
+          await cache.put(path, got.clone())
+          res = got
+        }
+        if (!path.endsWith('.js')) return
+        for (const name of (await res.clone().text()).match(/assets\/[\w.-]+\.(?:js|css)/g) ?? []) found.push(`/${name}`)
+      }),
+    )
+    next = found.filter((path) => !wanted.has(path))
+  }
   for (const req of await cache.keys()) {
     const path = new URL(req.url).pathname
     if (path.startsWith('/assets/') && !wanted.has(path)) await cache.delete(req)

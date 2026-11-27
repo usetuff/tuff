@@ -20,7 +20,16 @@ export type AskedMe = {
   workspace?: { slug: string }
 }
 
-export type WebEdition = {
+/**
+ * The edition's front door — what `main.tsx` asks before anything else:
+ * whether an address is one of the site's pages, and what the site keeps
+ * as the page loads. Its own file (`edition.front.tsx`), apart from
+ * `edition.tsx`, because `edition.tsx` carries the plans and the
+ * operators' screen into whatever imports it, and the landing — read on
+ * phones by people who have no account — was downloading all of that, and
+ * the app with it, before it could answer a tap.
+ */
+export type WebFront = {
   /**
    * The page at an address before the app, or null for the app. `path` is
    * the address without its `/fr`; `signedIn` whether this browser holds a
@@ -29,6 +38,9 @@ export type WebEdition = {
   page(path: string, signedIn: boolean): ReactNode | null
   /** Once, as the page loads: what the site keeps or counts before the app. */
   boot(path: string, signedIn: boolean): void
+}
+
+export type WebEdition = {
   /** Once signed in, before the app is drawn: true when the browser is leaving (to pay). */
   beforeApp(can: readonly string[]): Promise<boolean>
   /** Where to go after signing in, when the edition kept somewhere: a board to save, a code to apply. */

@@ -2,13 +2,11 @@ import { lazy, StrictMode, Suspense } from 'react'
 import { onHost } from './data/host.js'
 import { OfflineBand } from './ui/OfflineBand.jsx'
 import { createRoot } from 'react-dom/client'
-import { App } from './ui/App.jsx'
-import { Join } from './ui/Join.jsx'
 import { stored, Unreachable } from './data/api.js'
 import { watchKeyboard } from './data/keyboard.js'
 import { guardDrops } from './ui/DropFiles.jsx'
 import { now } from './data/words.js'
-import { edition } from './edition.jsx'
+import { front } from './edition.front.jsx'
 import { wearKept } from './data/brand.js'
 watchKeyboard()
 guardDrops()
@@ -16,6 +14,12 @@ guardDrops()
    a browser's offer to translate. */
 document.documentElement.lang = now
 
+/* The app itself, and an invitation's page, fetched only by somebody who
+   opens them: the landing and the site are read by people who have
+   neither, on phones, and were downloading the whole app — 700 KB
+   compressed — before their page could answer a tap. */
+const App = lazy(() => import('./ui/App.jsx').then((m) => ({ default: m.App })))
+const Join = lazy(() => import('./ui/Join.jsx').then((m) => ({ default: m.Join })))
 /* Sign-up, and the ways back into an account, fetched only by somebody who
    sees them. */
 const SignUp = lazy(() => import('./ui/SignUp.jsx').then((m) => ({ default: m.SignUp })))
@@ -24,8 +28,8 @@ const Reset = lazy(() => import('./ui/Access.jsx').then((m) => ({ default: m.Res
 const Verify = lazy(() => import('./ui/Access.jsx').then((m) => ({ default: m.Verify })))
 /* What the edition keeps or counts before anything is drawn — on the
    service the French front door and what its site remembers.
-   `edition.tsx`. */
-edition.boot(location.pathname.replace(/^\/fr(?=\/|$)/, '') || '/', Boolean(stored()))
+   `edition.front.tsx`. */
+front.boot(location.pathname.replace(/^\/fr(?=\/|$)/, '') || '/', Boolean(stored()))
 const here = location.pathname.replace(/^\/fr(?=\/|$)/, '') || '/'
 /* On a workspace's own domain there is one workspace: `/` is it when signed
    in and its sign-in otherwise, and none of the site's pages are drawn. */
@@ -68,7 +72,7 @@ const invited = /^\/invite\/([^/?#]+)/.exec(location.pathname)?.[1]
    connected. Everything else is the app, which asks for a sign-in where it
    needs one — and on your own server that is what `/` is. */
 const path = here
-const edition_ = host ? null : edition.page(path, Boolean(stored()))
+const edition_ = host ? null : front.page(path, Boolean(stored()))
 const app =
   !invited &&
   !edition_ &&
