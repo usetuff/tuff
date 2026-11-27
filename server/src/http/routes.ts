@@ -191,6 +191,8 @@ app.use('*', async (c, next) => {
   await next()
   const path = c.req.path
   if (path === '/signin' || path === '/setup' || path.startsWith('/auth/')) c.header('referrer-policy', 'no-referrer')
+  /* An invitation's page, whose address is its token. */
+  if (path.startsWith('/invite/')) c.header('referrer-policy', 'no-referrer')
   /* (The edition's own such addresses are said by the edition, just
      below: `edition.headers`.) */
   /* And a feedback page's confirmation, whose address carries the link's

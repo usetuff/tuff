@@ -108,9 +108,16 @@ invites.get('/invites', async (c) => {
           used_at: string | null
           used_by: string | null
           deleted_at: string | null
+          send_again: boolean
         }[]
       >`select id, role, project_ids, email, rights, created_at, expires_at,
-               used_at, used_by, deleted_at
+               used_at, used_by, deleted_at,
+               -- Mailed to the workspace's own domain, which no longer opens
+               -- it — released, paused, dropped or taken: taken nowhere now
+               -- (migration 328), so it must be sent again. The server says
+               -- so; the list does not work it out.
+               (mailed_domain is not null and used_at is null and deleted_at is null and expires_at > now()
+                and not exists (select 1 from host_domain(mailed_domain))) as send_again
         from invite order by created_at desc limit 100`
     }),
   })
@@ -664,9 +671,9 @@ publicInvites.get('/invite/:token', async (c) => {
 })
 
 publicInvites.post('/invite/:token/accept', async (c) => {
-  /* Through a workspace's own domain: never a password — the letter's proof
-     or the host's code, decided by the edition. A host is only
-     ever set by the edition that has hosts. */
+  /* Through a workspace's own domain: never a password, and always the
+     host's code — decided by the edition. A host is only ever set
+     by the edition that has hosts. */
   const host = hostOf(c)
   if (host) {
     return edition.hosts ? edition.hosts.acceptInvite(c, host, c.req.param('token')) : c.json({ error: { code: 'not_found' } }, 404)

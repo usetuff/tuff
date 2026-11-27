@@ -97,7 +97,7 @@ export type Hosts = {
       invitation's letter links to and is bound to. */
   domainOf(tx: Tx, workspaceId: string): Promise<{ id: string; hostname: string } | null>
   /** `POST /auth/invite/:token/accept` through a host: never a password —
-      the letter's proof or the host's code. */
+      always the host's code, never the token. */
   acceptInvite(c: Context, host: Host, token: string): Promise<Response>
   /** A connected, branded domain by the id the server sealed into a
       provider's start: where its ticket may go. */
