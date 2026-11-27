@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { add, login, make, openProject, shownAs, viewAnswers } from './helpers.js'
+import { add, drawnWhole, login, make, openProject, shownAs, viewAnswers } from './helpers.js'
 
 /* An 80 × 40 PNG of one colour: twice as wide as it is tall, so its frame
    on a card is half the card's width high. */
@@ -221,4 +221,142 @@ test('tasks ordered by Created stand newest first, in the list and on the board'
   await page.reload()
   await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 20_000 })
   await expect.poll(async () => mine(await cards())).toEqual(newest)
+})
+
+/**
+ * The start of a description under the title.
+ * Off until it is turned on, each view its own answer; on, a card says two
+ * lines of it at most and a row one, a task with none takes no room, the
+ * card is drawn whole, and this machine remembers.
+ */
+test('a card and a row say the start of the description, when asked', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await login(page)
+  const stamp = Date.now()
+  const name = `Excerpts ${stamp}`
+  await add(page, 'new-project', name)
+  await openProject(page, name)
+  await page.getByTestId('tool-tasks').click()
+  await make(page, page.getByTestId('create-new-task'), `Described ${stamp}`, `Bare ${stamp}`)
+
+  const said =
+    'The logo overlaps the menu on a phone, and the header jumps by eight pixels when the search opens. ' +
+    'Check it on the smallest iPhone and on an Android of the same width before calling it done.'
+  const h = await api(page)
+  const id = await page.evaluate(
+    async ([hh, wanted]) => {
+      const projects = (await (await fetch('/api/projects', { headers: hh })).json()) as { projects: { id: string; name: string }[] }
+      const p = projects.projects.find((x) => x.name === wanted)!
+      const page = (await (await fetch(`/api/projects/${p.id}/tasks`, { headers: hh })).json()) as {
+        tasks: { id: string; title: string }[]
+      }
+      return page.tasks.find((t) => t.title.startsWith('Described'))!.id
+    },
+    [h, name] as const,
+  )
+  /* Split by a mark, as the editor writes bold into the middle of a line. */
+  const patched = await page.request.patch(`/api/tasks/${id}`, {
+    headers: { ...h, 'content-type': 'application/json' },
+    data: {
+      body: {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', text: said.slice(0, 40) },
+              { type: 'text', text: said.slice(40), marks: [{ type: 'bold' }] },
+            ],
+          },
+        ],
+      },
+    },
+  })
+  expect(patched.ok()).toBe(true)
+  await page.reload()
+
+  // The list, off by default.
+  await shownAs(page, 'list')
+  const row = page.locator('[data-task]').filter({ hasText: `Described ${stamp}` })
+  const bareRow = page.locator('[data-task]').filter({ hasText: `Bare ${stamp}` })
+  await expect(row).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('[data-excerpt]')).toHaveCount(0)
+  const bareHeight = (await bareRow.boundingBox())!.height
+
+  await viewAnswers(page, true)
+  const toggle = page.getByTestId('shows-excerpt')
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  const rowSays = row.locator('[data-excerpt]')
+  await expect(rowSays).toHaveText(/^The logo overlaps the menu on a phone, and the header/)
+  // One line on a row, cut with an ellipsis.
+  const rowLine = await rowSays.evaluate((el) => ({
+    height: el.getBoundingClientRect().height,
+    line: Number.parseFloat(getComputedStyle(el).lineHeight),
+    ellipsis: getComputedStyle(el).textOverflow,
+  }))
+  expect(rowLine.height).toBeLessThanOrEqual(rowLine.line + 1)
+  expect(rowLine.ellipsis).toBe('ellipsis')
+  // A task with no description takes no room.
+  await expect(bareRow.locator('[data-excerpt]')).toHaveCount(0)
+  expect((await bareRow.boundingBox())!.height).toBe(bareHeight)
+  await shot(page, 'list-with-descriptions')
+  await viewAnswers(page, false)
+
+  // The board keeps its own answer: still off there.
+  await shownAs(page, 'board')
+  const card = page.locator('[data-card]').filter({ hasText: `Described ${stamp}` })
+  const bareCard = page.locator('[data-card]').filter({ hasText: `Bare ${stamp}` })
+  await expect(card).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('[data-excerpt]')).toHaveCount(0)
+  const bareCardHeight = (await bareCard.boundingBox())!.height
+  await viewAnswers(page, true)
+  await expect(page.getByTestId('shows-excerpt')).toHaveAttribute('aria-pressed', 'false')
+  await page.getByTestId('shows-excerpt').click()
+  const cardSays = card.locator('[data-excerpt]')
+  await expect(cardSays).toHaveText(/^The logo overlaps the menu on a phone/)
+  // Two lines at most on a card, and the rest cut.
+  const cardLines = await cardSays.evaluate((el) => ({
+    height: el.getBoundingClientRect().height,
+    line: Number.parseFloat(getComputedStyle(el).lineHeight),
+    cut: el.scrollHeight > el.clientHeight,
+  }))
+  expect(cardLines.height).toBeLessThanOrEqual(cardLines.line * 2 + 1)
+  expect(cardLines.height).toBeGreaterThan(cardLines.line * 1.5)
+  expect(cardLines.cut).toBe(true)
+  await expect(bareCard.locator('[data-excerpt]')).toHaveCount(0)
+  expect((await bareCard.boundingBox())!.height).toBe(bareCardHeight)
+  await shot(page, 'board-with-descriptions')
+  await viewAnswers(page, false)
+
+  // Drawn whole: from the list to the board, the card is one height from its first frame.
+  await shownAs(page, 'list')
+  await expect(row.locator('[data-excerpt]')).toBeVisible()
+  const heights = await drawnWhole(page, '[data-card]:has([data-excerpt])', () => shownAs(page, 'board'))
+  expect(heights).toHaveLength(1)
+
+  // And from the first paint of a fresh visit, remembered on this machine.
+  await page.addInitScript(() => {
+    const w = window as unknown as { excerptHeights: number[] }
+    w.excerptHeights = []
+    const look = () => {
+      const el = document.querySelector('[data-card]:has([data-excerpt])')
+      const hh = el ? Math.round(el.getBoundingClientRect().height) : 0
+      if (hh > 0 && w.excerptHeights[w.excerptHeights.length - 1] !== hh) w.excerptHeights.push(hh)
+      requestAnimationFrame(look)
+    }
+    requestAnimationFrame(look)
+  })
+  await page.reload()
+  await expect(card.locator('[data-excerpt]')).toBeVisible({ timeout: 20_000 })
+  await page.waitForTimeout(1200)
+  expect(await page.evaluate(() => (window as unknown as { excerptHeights: number[] }).excerptHeights)).toHaveLength(1)
+  await shownAs(page, 'list')
+  await expect(row.locator('[data-excerpt]')).toBeVisible({ timeout: 20_000 })
+
+  // Turned off, it is gone at once.
+  await viewAnswers(page, true)
+  await page.getByTestId('shows-excerpt').click()
+  await expect(page.locator('[data-excerpt]')).toHaveCount(0)
 })

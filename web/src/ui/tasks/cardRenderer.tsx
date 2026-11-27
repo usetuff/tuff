@@ -196,6 +196,21 @@ export function cardRenderer({
           </div>
         )}
 
+        {/* What the work is, in its own words: the start of the
+            description, two lines at most and cut with an ellipsis. It
+            comes with the row, so the card is this tall from its first
+            frame; a task with no description draws nothing here and takes
+            no room. */}
+        {shows.excerpt && t.excerpt && (
+          <p
+            data-excerpt
+            className="mt-1 line-clamp-2 text-sm [overflow-wrap:anywhere] text-ink-3"
+            style={{ letterSpacing: 'var(--track-body)' }}
+          >
+            {t.excerpt}
+          </p>
+        )}
+
         {/*
           What is true about it, as chips.
           

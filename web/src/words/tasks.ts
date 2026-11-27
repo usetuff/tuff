@@ -88,6 +88,8 @@ export const TASKS = say({
   ageSwitch: ['Age', 'Ancienneté'],
   /* The task's first picture at the head of its card. */
   images: ['Images', 'Images'],
+  /* The start of the task's description under its title. */
+  description: ['Description', 'Description'],
 
   /* Whose work, in the View panel. */
   assignedTo: ['Assigned to', 'Attribuées à'],

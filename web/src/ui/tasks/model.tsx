@@ -39,6 +39,8 @@ export type Task = {
   parent_id: string | null
   /** Its first picture, for a card. */
   picture?: TaskPicture
+  /** The start of its description as plain words, or nothing. */
+  excerpt?: string | null
   /** The handles of what it waits on that is still open.
       Empty or absent for nothing. */
   waiting_on?: string[]

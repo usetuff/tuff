@@ -7,7 +7,7 @@ import { FACTS, HEADS, LOCALE, MAKE, MORE, SAYS, dayMonthLong } from '../data/wo
 import { TASK_DETAIL as W } from '../words/taskDetail.js'
 import type { Changed, TaskData } from './tasks/useTaskData.js'
 import type { Task as Row } from './tasks/model.jsx'
-import type { PullOnTask } from '@tracker/shared-schema'
+import { type PullOnTask, excerptOf } from '@tracker/shared-schema'
 import { GITHUB } from '../words/github.js'
 import { PullsOnTask } from './Github.jsx'
 import { api, isGone, untilAnswered } from '../data/api.js'
@@ -87,6 +87,9 @@ export type Behind = Pick<TaskData, 'write' | 'lay' | 'takeOff' | 'settle'>
 function asRow(change: Partial<Full>): Partial<Row> {
   const { body: _body, ...rest } = change
   const out = { ...rest } as unknown as Partial<Row>
+  /* The row says the start of it, worked out here by the server's own
+     rule so the card under the panel says what was just written. */
+  if (change.body !== undefined) out.excerpt = excerptOf(change.body)
   if (change.assignee_ids) out.assignee_id = change.assignee_ids[0] ?? null
   if (change.list_id !== undefined) out.decided_at = new Date().toISOString()
   return out

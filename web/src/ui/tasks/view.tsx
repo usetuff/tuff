@@ -64,6 +64,8 @@ export type Shows = {
   labels: boolean
   /** The task's first picture at the head of its card — the board only. */
   pictures: boolean
+  /** The start of its description, under the title. */
+  excerpt: boolean
 }
 /* The handle is on by default: it is the row's name in a sentence, and a
    name nobody can see is one nobody learns to use. It can be turned off
@@ -103,6 +105,9 @@ const SHOWS_DEFAULT: Shows = {
   /* Off until somebody asks, and on the board alone: a board of pictures
      is a board of fewer cards, and a row has no room for one. */
   pictures: false,
+  /* Off until somebody asks: a line of grey under every title is a
+     list half as long on the screen. */
+  excerpt: false,
 }
 /**
  * And what a board starts with, which is not what a list starts with.
@@ -524,6 +529,9 @@ function ViewAnswers({ on, group, sort, dir, who, labels, people, meId, allLabel
             /* Board-only for the same reason: a row has no room for a
                picture. */
             ...(arranging ? [] : [['pictures', W.images] as const]),
+            /* On both: a card has room under its title for two lines of
+               it, and a row for one. */
+            ['excerpt', W.description] as const,
           ] as const
         ).map(([key, said]) => (
           <Toggle key={key} testId={`shows-${key}`} on={shows[key]} onChange={(on) => onShows({ ...shows, [key]: on })} wide>
