@@ -1,4 +1,4 @@
-import { workspaceDoor } from '../../data/doors.js'
+import { doorsAway, workspaceDoor } from '../../data/doors.js'
 import { api } from '../../data/api.js'
 import { type Route } from '../../data/route.js'
 import { Sidebar } from '../Sidebar.jsx'
@@ -151,6 +151,7 @@ export function sideColumn({
         workspace={me.workspace}
         onMake={() => setMaking(true)}
         {...(workspaceDoor(me.can) ? { onWorkspaceSettings: () => navigate({ view: 'settings' }) } : {})}
+        workspaceSettingsAway={doorsAway(me).settings}
         view={view}
         project={current}
         room={reading}

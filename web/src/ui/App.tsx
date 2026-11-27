@@ -4,7 +4,7 @@ import { HostSecurity, HostSignIn } from './app/hostSignIn.jsx'
 import { UndoToast } from './UndoToast.jsx'
 import { MorePage, PhoneTabs } from './PhoneTabs.jsx'
 import { Chats } from './chat/Chats.jsx'
-import { membersDoor, workspaceDoor } from '../data/doors.js'
+import { doorsAway, membersDoor, workspaceDoor } from '../data/doors.js'
 import { PLACES } from '../data/words.js'
 import { APP as W } from '../words/app.js'
 import { api, AFTER_SIGN_IN, signOut, stored } from '../data/api.js'
@@ -276,6 +276,7 @@ export function App() {
     tabTitle,
     open_,
     reachable,
+    away,
     findable,
     waitingIn,
     go,
@@ -434,6 +435,7 @@ export function App() {
                 rooms={findable}
                 counts={waitingIn}
                 views={reachable}
+                away={away}
                 inProject={beneath.view === 'projects' ? project : null}
                 openTask={beneath.view === 'projects' && beneath.tool === 'tasks' ? (beneath.objectId ?? null) : null}
                 canWrite={me.can.includes('content.create')}
@@ -605,6 +607,7 @@ export function App() {
                     workspace={me.workspace}
                     canPeople={membersDoor(me.can)}
                     canWorkspace={workspaceDoor(me.can)}
+                    settingsAway={doorsAway(me).settings}
                     canMakeWorkspace={me.can.includes('workspace.create')}
                     runsIt={edition.admin?.may(me.can) === true}
                     instance={me.can.includes('instance')}
@@ -624,6 +627,7 @@ export function App() {
                     rooms={findable}
                     counts={waitingIn}
                     views={reachable}
+                    away={away}
                     inProject={null}
                     canWrite={me.can.includes('content.create')}
                     onGo={(to) => void go(to)}

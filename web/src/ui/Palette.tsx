@@ -105,6 +105,9 @@ export type Destination =
   | { kind: 'room'; id: string; message?: { id: string; thread: string | null } }
   /* The window that connects an agent, over People & Agents — `docs/specs/palette.md`. */
   | { kind: 'connect' }
+  /* A door a workspace's own domain keeps shut, opened at usetuff.com in a
+     new tab. */
+  | { kind: 'away'; url: string }
 
 /*
  * What "Connect an agent" is found by besides its own words: what somebody
@@ -222,6 +225,7 @@ export function Palette({
   rooms = [],
   counts = {},
   mayConnect = false,
+  away = [],
 }: {
   projects: Project[]
   /**
@@ -267,6 +271,9 @@ export function Palette({
   onQuery?: (q: string) => void
   /** Whether this person may connect an agent — `agent.connect` in `/api/me`. */
   mayConnect?: boolean
+  /** The screens a workspace's own domain keeps shut, at usetuff.com —
+      offered where the sidebar offers them, as links that leave. */
+  away?: { key: string; label: string; url: string; icon: IconName }[]
 }) {
   const [q, setQ] = useState(startQ)
   /*
@@ -522,6 +529,18 @@ export function Palette({
           ...(counts[v] ? { count: counts[v] } : {}),
           go: { kind: 'view', view: v },
         })),
+      /* The doors a workspace's own domain keeps shut, at usetuff.com: its
+         name beside each, so the row says where it goes. */
+      ...away
+        .filter((a) => !onlyHits && matches(a.label))
+        .map<Row>((a) => ({
+          key: `away:${a.key}`,
+          label: a.label,
+          hint: new URL(a.url).host,
+          group: 'Go to',
+          icon: a.icon,
+          go: { kind: 'away', url: a.url },
+        })),
       /* Connecting an agent, beside the place it is done in: people kept
          looking for it everywhere but under the place's old name, Members.
          Found by what somebody looking for it types — "claude", "mcp". */
@@ -583,7 +602,24 @@ export function Palette({
           ]
         : []),
     ]
-  }, [projects, people, rooms, views, counts, hits, q, inProject, canWrite, recent, asked, blocking, openTask, narrowedChat, mayConnect])
+  }, [
+    projects,
+    people,
+    rooms,
+    views,
+    counts,
+    hits,
+    q,
+    inProject,
+    canWrite,
+    recent,
+    asked,
+    blocking,
+    openTask,
+    narrowedChat,
+    mayConnect,
+    away,
+  ])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: onQuery and setOpen are the opener's, read when a row is run
   const run = useCallback(
@@ -602,7 +638,8 @@ export function Palette({
          question. Not a task being made, which is not a place yet. */
       /* Nor connecting an agent, which is a window rather than a place, and
          a right that can be taken away after it was kept. */
-      if (go.kind !== 'create' && go.kind !== 'block' && go.kind !== 'connect') {
+      /* Nor a door that leaves for usetuff.com, which is not a place here. */
+      if (go.kind !== 'create' && go.kind !== 'block' && go.kind !== 'connect' && go.kind !== 'away') {
         const { group: _g, count: _c, badge: _b, ...kept } = row
         remember(RECENT, [{ ...kept, go } as Kept, ...recent.filter((k) => k.key !== row.key)].slice(0, 5))
         const said = q.trim()

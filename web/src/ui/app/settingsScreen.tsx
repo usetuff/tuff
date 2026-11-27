@@ -1,8 +1,9 @@
 import { edition } from '../../edition.jsx'
-import { workspaceDoor } from '../../data/doors.js'
+import { doorsAway, workspaceDoor } from '../../data/doors.js'
 import { APP as W } from '../../words/app.js'
 import { api } from '../../data/api.js'
 import { PageTitle, Empty } from '../kit.jsx'
+import { Icon } from '../glyphs.jsx'
 import { Webhooks } from '../Admin.jsx'
 import { AuditDoor } from '../AuditLog.jsx'
 import { GithubSection } from '../Github.jsx'
@@ -43,7 +44,31 @@ export function settingsScreen({
               <div data-whole="settings">
                 {/* Said plainly to somebody who followed a link here, rather
                 than an empty page: nobody else is offered the door. */}
-                {!workspaceDoor(me.can) && <Empty>{W.ownerOnlySettings}</Empty>}
+                {!workspaceDoor(me.can) &&
+                  (() => {
+                    /* The owner on a workspace's own domain, which keeps the
+                       settings shut: where they are changed, and the way there. */
+                    const at = doorsAway(me).settings
+                    if (!at) return <Empty>{W.ownerOnlySettings}</Empty>
+                    const where = new URL(at).host
+                    return (
+                      <Empty>
+                        <span className="flex flex-col items-start gap-2">
+                          <span>{W.settingsElsewhere(where)}</span>
+                          <a
+                            data-testid="settings-away"
+                            href={at}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-accent"
+                          >
+                            {W.openSettingsThere(where)}
+                            <Icon name="away" size={12} />
+                          </a>
+                        </span>
+                      </Empty>
+                    )
+                  })()}
 
                 {/* What it is called and looks like, then what the edition
                 says it is on, then the switches. */}

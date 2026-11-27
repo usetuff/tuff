@@ -1,5 +1,5 @@
 import { edition } from '../../edition.jsx'
-import { membersDoor, workspaceDoor } from '../../data/doors.js'
+import { doorsAway, membersDoor, workspaceDoor } from '../../data/doors.js'
 import { PLACES, HEADS } from '../../data/words.js'
 import { LABEL } from '../../data/tools.js'
 import { APP as W } from '../../words/app.js'
@@ -7,6 +7,7 @@ import { api } from '../../data/api.js'
 import { type Route, setBeside } from '../../data/route.js'
 import { ProjectMark, markOf } from '../icons.jsx'
 import { type Destination } from '../Palette.jsx'
+import { type IconName } from '../glyphs.jsx'
 import { type Room, leftRoom, roomName as nameOfRoom } from '../Sidebar.jsx'
 import { INSTANCE } from '../../words/instance.js'
 import { type PersonDoors } from '../PersonCard.jsx'
@@ -138,6 +139,13 @@ export function shellParts({
    */
   const mayConnect = me.can.includes('agent.connect')
   const mayInvite = me.can.includes('people.invite')
+  /* On a workspace's own domain, the doors it keeps shut that the person's
+     role opens at usetuff.com: links there. */
+  const awayDoors = doorsAway(me)
+  const away: { key: string; label: string; url: string; icon: IconName }[] = [
+    ...(awayDoors.settings ? [{ key: 'settings', label: W.workspaceSettings, url: awayDoors.settings, icon: 'gear' as IconName }] : []),
+    ...(awayDoors.invite ? [{ key: 'invite', label: W.invitePeople, url: awayDoors.invite, icon: 'people' as IconName }] : []),
+  ]
   /* Where the edition holds agents back, somebody who may invite but not
      connect still finds the agents tab, saying what the edition says.
      `can` refuses connecting as before; the tab only says so. */
@@ -297,6 +305,9 @@ export function shellParts({
   const waitingIn = { notifications: inboxCount(unread) }
 
   async function go(to: Destination) {
+    /* A door a workspace's own domain keeps shut: the same screen at
+       usetuff.com, in a new tab. */
+    if (to.kind === 'away') window.open(to.url, '_blank', 'noopener,noreferrer')
     if (to.kind === 'view') navigate({ view: to.view } as Route)
     if (to.kind === 'project') navigate({ view: 'projects', projectId: to.id })
     if (to.kind === 'person') openPerson(to.id)
@@ -361,6 +372,8 @@ export function shellParts({
     tabTitle,
     open_,
     reachable,
+    away,
+    awayDoors,
     findable,
     waitingIn,
     go,

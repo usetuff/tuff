@@ -1,3 +1,5 @@
+import { onHost } from './host.js'
+
 /**
  * Whether somebody may open Members. The
  * screen is the fourth switch's; somebody the owner lets connect agents
@@ -20,4 +22,26 @@ export function workspaceDoor(can: readonly string[]): boolean {
   return (
     can.includes('workspace.billing') || can.includes('audit.read') || (can.includes('project.create') && can.includes('people.invite'))
   )
+}
+
+/**
+ * On a workspace's own domain, the doors the host keeps shut that the
+ * person's role would open at usetuff.com.
+ * Each is the address
+ * of the same screen at usetuff.com, or null where the door is open here
+ * or would be shut there too. Decided from the server's `can_off_host`,
+ * never by the page.
+ */
+export function doorsAway(me: { can: readonly string[]; can_off_host?: readonly string[] | undefined; workspace: { slug: string } }): {
+  settings: string | null
+  invite: string | null
+} {
+  const host = onHost()
+  const off = me.can_off_host ?? []
+  if (!host || off.length === 0) return { settings: null, invite: null }
+  const at = (path: string) => `${host.home}/${me.workspace.slug}/${path}`
+  return {
+    settings: !workspaceDoor(me.can) && workspaceDoor([...me.can, ...off]) ? at('settings') : null,
+    invite: !me.can.includes('people.invite') && off.includes('people.invite') ? at('members') : null,
+  }
 }

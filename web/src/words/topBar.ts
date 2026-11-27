@@ -28,5 +28,7 @@ export const TOP_BAR = say({
   accountSettings: ['Account settings', 'Paramètres du compte'],
   help: ['Help', 'Aide'],
   workspaceSettings: ['Workspace settings', 'Paramètres de l’espace de travail'],
+  /* A door the workspace's own domain keeps shut, opened at usetuff.com. */
+  opensAt: [(where: string) => `Opens ${where} in a new tab`, (where: string) => `Ouvre ${where} dans un nouvel onglet`],
   role: [(r: string | null | undefined) => r, (r: string | null | undefined) => (r ? (ROLES[r] ?? r) : r)],
 })

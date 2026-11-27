@@ -31,6 +31,9 @@ export type Me = {
   role: 'owner' | 'member'
   settings: Record<string, string>
   can: string[]
+  /** On a workspace's own domain, what the role allows at usetuff.com and
+      the host refuses — the server's answer, for links there. */
+  can_off_host?: string[]
   /** Your own server's version, to its owners only. */
   server?: ServerVersion
 }

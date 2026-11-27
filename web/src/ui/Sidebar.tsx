@@ -171,6 +171,7 @@ export function Sidebar({
   workspace,
   onMake,
   onWorkspaceSettings,
+  workspaceSettingsAway = null,
 }: {
   view: View
   project: string | null
@@ -202,6 +203,9 @@ export function Sidebar({
   onMake?: () => void
   /** This workspace's settings, for whoever may change something there. */
   onWorkspaceSettings?: (() => void) | undefined
+  /** Or their address at usetuff.com, where a workspace's own domain keeps
+      them shut — `doorsAway`. */
+  workspaceSettingsAway?: string | null | undefined
   onView: (v: View) => void
   onProject: (id: string) => void
   /**
@@ -448,6 +452,7 @@ export function Sidebar({
                       }
                     : undefined
                 }
+                settingsAway={workspaceSettingsAway}
               />
             </div>
             {onMake && (

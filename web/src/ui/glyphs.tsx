@@ -423,6 +423,12 @@ const SHAPES = {
     vb: '0 0 16 16',
     body: `<path d="M6.9 9.1a2.6 2.6 0 0 0 3.7 0l2.2-2.2a2.6 2.6 0 0 0-3.7-3.7l-.8.8" stroke="currentColor" stroke-width="1.44" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.1 6.9a2.6 2.6 0 0 0-3.7 0L3.2 9.1a2.6 2.6 0 0 0 3.7 3.7l.8-.8" stroke="currentColor" stroke-width="1.44" stroke-linecap="round" stroke-linejoin="round"/>`,
   },
+  /* Leaving for another address: an arrow up and out of the corner — a
+     door the host keeps shut, opened at usetuff.com (`custom-domain.md`). */
+  away: {
+    vb: '0 0 16 16',
+    body: `<path d="M5.5 10.5 11 5M6.25 4.75H11.25V9.75" stroke="currentColor" stroke-width="1.44" stroke-linecap="round" stroke-linejoin="round"/>`,
+  },
   /* A table: a frame, its header line and one column rule. */
   table: {
     vb: '0 0 16 16',

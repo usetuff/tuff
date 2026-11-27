@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BAR, HEADS, MAKE, MORE } from '../data/words.js'
 import { TOP_BAR as W } from '../words/topBar.js'
 import { INSTANCE } from '../words/instance.js'
-import { workspaceDoor } from '../data/doors.js'
+import { doorsAway, workspaceDoor } from '../data/doors.js'
 import { api, setSession, type Session } from '../data/api.js'
 import { knownWorkspaces, refreshWorkspaces, useWorkspaces, waitingElsewhere, type Workspace } from '../data/workspaces.js'
 import { accountReads, instanceReads, warm, workspaceSettingsReads } from '../data/ahead.js'
@@ -115,6 +115,8 @@ export function TopBar({
     workspace: { id: string; name: string; slug: string } & Omit<WorkspaceLook, 'id' | 'name'>
     role: string
     can?: string[]
+    /** On a workspace's own domain, what usetuff.com would allow — `doorsAway`. */
+    can_off_host?: string[]
     /** Your own server's version, to its owners only. */
     server?: ServerVersion
   }
@@ -276,6 +278,7 @@ export function TopBar({
             look={me.workspace}
             shut={column === SHUT}
             onSettings={workspaceDoor(me.can ?? []) ? () => onView('settings') : undefined}
+            settingsAway={doorsAway({ ...me, can: me.can ?? [] }).settings}
             onWarmSettings={() => warm(workspaceSettingsReads(me.can ?? []))}
             mayMake={(me.can ?? []).includes('workspace.create')}
           />
@@ -593,6 +596,7 @@ export function WorkspaceMenu({
   shut,
   look,
   onSettings,
+  settingsAway = null,
   onWarmSettings,
   ground = 'var(--canvas)',
   mayMake = true,
@@ -609,6 +613,9 @@ export function WorkspaceMenu({
   shut: boolean
   /** The way to this workspace's settings. */
   onSettings?: (() => void) | undefined
+  /** Or, on a workspace's own domain that keeps them shut, their address at
+      usetuff.com — `doorsAway`. */
+  settingsAway?: string | null | undefined
   /** Asks what the settings will read, while the pointer is on their door. */
   onWarmSettings?: () => void
   /** What the switcher stands on, for the ring round the dot on its mark. */
@@ -837,6 +844,20 @@ export function WorkspaceMenu({
               </button>
             </>
           )}
+          {/* The same door on a workspace's own domain, which keeps it shut:
+              a link to it at usetuff.com, saying it leaves. */}
+          {!onSettings && settingsAway && (
+            <>
+              <div className="my-1 bg-line" style={{ height: 1 }} />
+              <AwayRow
+                href={settingsAway}
+                label={W.workspaceSettings}
+                icon="gear"
+                testId="workspace-settings-away"
+                onGo={() => setOpen(false)}
+              />
+            </>
+          )}
           {/* Below the ones there are, past a line: these are places to go,
               and this is a thing to do. */}
           {mayMake && <div className="my-1 bg-line" style={{ height: 1 }} />}
@@ -863,5 +884,48 @@ export function WorkspaceMenu({
       )}
       {making && <NewWorkspace onClose={() => setMaking(false)} />}
     </div>
+  )
+}
+
+/**
+ * A menu row that leaves for usetuff.com: a door a workspace's own domain
+ * keeps shut, opened there in a new tab.
+ * The arrow says it leaves.
+ */
+export function AwayRow({
+  href,
+  label,
+  icon,
+  testId,
+  onGo,
+}: {
+  href: string
+  label: string
+  icon: IconName
+  testId: string
+  onGo?: () => void
+}) {
+  const where = new URL(href).host
+  return (
+    <a
+      data-row
+      data-testid={testId}
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title={W.opensAt(where)}
+      onClick={onGo}
+      className="flex w-full items-center gap-2 px-2 text-left text-sm text-ink"
+      style={{ height: 'var(--row-h)' }}
+    >
+      <span className="flex size-4 shrink-0 items-center justify-center text-ink-3">
+        <Icon name={icon} size={14} />
+      </span>
+      <span className="truncate">{label}</span>
+      <span className="sr-only">{W.opensAt(where)}</span>
+      <span className="ml-auto flex shrink-0 items-center text-ink-3">
+        <Icon name="away" size={12} />
+      </span>
+    </a>
   )
 }

@@ -93,6 +93,12 @@ export const APP = say({
     'Only the owner can change this workspace’s settings.',
     'Seul le propriétaire peut modifier les paramètres de cet espace de travail.',
   ],
+  /* The owner on a workspace's own domain, which keeps these shut. */
+  settingsElsewhere: [
+    (where: string) => `This workspace’s settings are changed on ${where}.`,
+    (where: string) => `Les paramètres de cet espace de travail se modifient sur ${where}.`,
+  ],
+  openSettingsThere: [(where: string) => `Open on ${where}`, (where: string) => `Ouvrir sur ${where}`],
 
   /* One person. */
   role: [(r: string | null | undefined) => r, (r: string | null | undefined) => (r ? (ROLES[r] ?? r) : r)],

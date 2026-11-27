@@ -151,6 +151,7 @@ export function MorePage({
   workspace,
   canPeople,
   canWorkspace = false,
+  settingsAway = null,
   canMakeWorkspace = true,
   runsIt = false,
   instance = false,
@@ -162,6 +163,9 @@ export function MorePage({
   canPeople: boolean
   /** Whether this person may open the workspace's settings — `settings.md`. */
   canWorkspace?: boolean
+  /** Or their address at usetuff.com, where a workspace's own domain keeps
+      them shut — `doorsAway`. */
+  settingsAway?: string | null | undefined
   /** Whether this person may make a workspace — `workspace.create`. */
   canMakeWorkspace?: boolean
   /** Whether this person runs the product, where the edition has such
@@ -201,6 +205,7 @@ export function MorePage({
             look={workspace}
             shut={false}
             onSettings={canWorkspace ? () => onGo('settings') : undefined}
+            settingsAway={settingsAway}
             ground="var(--panel)"
             mayMake={canMakeWorkspace}
           />
@@ -213,6 +218,29 @@ export function MorePage({
             <MoreRow icon={r.icon} label={r.label} testId={r.testId} onPress={r.go} away={r.away} />
           </div>
         ))}
+        {/* The settings a workspace's own domain keeps shut, at usetuff.com. */}
+        {!canWorkspace && settingsAway && (
+          <>
+            {rows.length > 0 && <Hairline inset={48} />}
+            <a
+              data-row
+              data-testid="more-settings-away"
+              href={settingsAway}
+              target="_blank"
+              rel="noreferrer"
+              title={TOP_BAR.opensAt(new URL(settingsAway).host)}
+              className="flex w-full items-center gap-3 px-4 text-left text-md text-ink"
+              style={{ height: 48 }}
+            >
+              <span className="flex size-5 items-center justify-center text-ink-2">
+                <Icon name="gear" size={18} />
+              </span>
+              <span className="min-w-px flex-1 truncate">{W.workspaceSettings}</span>
+              <span className="sr-only">{TOP_BAR.opensAt(new URL(settingsAway).host)}</span>
+              <Icon name="away" size={12} className="text-ink-3" />
+            </a>
+          </>
+        )}
       </Panel>
       <Panel>
         <ThemeButton row tall />

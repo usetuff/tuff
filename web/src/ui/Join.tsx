@@ -5,6 +5,8 @@ import { JOIN as W } from '../words/join.js'
 import type { Brand } from '@tracker/shared-schema'
 import { WorkspaceMark } from './WorkspaceMark.jsx'
 import { wearBrand } from '../data/brand.js'
+import { onHost } from '../data/host.js'
+import { HostJoin } from './app/hostJoin.jsx'
 
 /**
  * Following an invitation.
@@ -29,6 +31,8 @@ type Seen = {
   workspace_id?: string
   /** The workspace's own name and mark, where its plan wears them. */
   brand?: Brand | null | undefined
+  /** Mailed to the workspace's own domain, and taken there. */
+  host?: string | undefined
 }
 
 export function Join({ token }: { token: string }) {
@@ -51,6 +55,12 @@ export function Join({ token }: { token: string }) {
     const asMe = stored() ? api<Seen>(`/invite/${encodeURIComponent(token)}`).catch(() => null) : Promise.resolve(null)
     void asMe.then(async (mine) => {
       const read = mine?.state ? mine : await previewInvite(token)
+      /* Mailed to the workspace's own domain: taken there and nowhere else,
+         so this page goes there, the address and all. */
+      if (read.host && !onHost()) {
+        location.replace(`https://${read.host}/invite/${encodeURIComponent(token)}`)
+        return
+      }
       setSeen(read)
       if (read.email) setEmail(read.email)
       /* The workspace's name on the tab, and its mark, where it wears them. */
@@ -63,7 +73,9 @@ export function Join({ token }: { token: string }) {
   /* The same face as signing up, which is what this is for somebody new. */
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'dark')
-    document.title = W.docTitle
+    /* On the workspace's own domain, never Tuff's name in the tab. */
+    const own = onHost()
+    document.title = own ? W.docTitleIn(own.name) : W.docTitle
   }, [])
 
   /* Into the workspace the new session is for; the address resolves it. */
@@ -132,6 +144,12 @@ export function Join({ token }: { token: string }) {
   const where = seen.workspace_name ?? W.theWorkspace
   const quiet = 'h-11 text-md font-medium'
   const line = 'text-center text-md leading-[1.5]'
+  /* On the workspace's own domain: somebody already in it is shown the way
+     in, as here; anybody else gives a name and an email, never a password. */
+  const host = onHost()
+  if (host && !(seen.you && seen.member)) {
+    return <HostJoin token={token} host={host} where={where} invitedAs={seen.email} mark={mark} />
+  }
 
   if (seen.you && !elsewise) {
     const you = seen.you
@@ -147,7 +165,13 @@ export function Join({ token }: { token: string }) {
             )}
             <button
               data-testid="join-open"
-              onClick={() => void into(api<Session>(`/workspaces/${seen.workspace_id}/enter`, { method: 'POST' }))}
+              onClick={() =>
+                /* On its own domain the session is in it already, and entering
+                   a workspace is never a host's. */
+                host
+                  ? location.assign(`/${host.slug}`)
+                  : void into(api<Session>(`/workspaces/${seen.workspace_id}/enter`, { method: 'POST' }))
+              }
               disabled={busy}
               className="mt-2 h-11 rounded-full text-md font-medium transition-transform active:scale-[0.98] disabled:opacity-40"
               style={primaryLook}

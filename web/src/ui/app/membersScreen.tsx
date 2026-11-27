@@ -1,4 +1,5 @@
-import { membersDoor } from '../../data/doors.js'
+import { doorsAway, membersDoor } from '../../data/doors.js'
+import { TOP_BAR } from '../../words/topBar.js'
 import { PLACES, HEADS, LOCALE } from '../../data/words.js'
 import { APP as W } from '../../words/app.js'
 import { api } from '../../data/api.js'
@@ -105,6 +106,31 @@ export function membersScreen({
                 <Icon name="plusThin" size={15} />
               </button>
             )}
+            {/* On a workspace's own domain, which keeps inviting shut: the
+                same "+" as a link to this screen at usetuff.com, with the
+                arrow that says it leaves. */}
+            {!mayInvite &&
+              !mayConnect &&
+              (() => {
+                const at = doorsAway(me).invite
+                if (!at) return null
+                const said = `${W.invitePeople} — ${TOP_BAR.opensAt(new URL(at).host)}`
+                return (
+                  <a
+                    data-control
+                    data-testid="members-add-away"
+                    href={at}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={said}
+                    title={said}
+                    className="flex h-9 shrink-0 items-center justify-center gap-1 rounded-full bg-track px-3 text-ink-2"
+                  >
+                    <Icon name="plusThin" size={15} />
+                    <Icon name="away" size={12} />
+                  </a>
+                )
+              })()}
           </div>
           {/* Found by name — a workspace is not a short list. */}
           <div className="shrink-0 px-3 pb-2">
