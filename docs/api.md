@@ -2668,7 +2668,7 @@ actor it sets, an operator's or a server owner's included.
 `auth_totp_begin`, `auth_totp_disable`, `auth_totp_enable`,
 `auth_totp_secret`, `auth_totp_secret_for`, `auth_totp_spend`,
 `delete_my_account`, `digest_off`, `github_person_retoken`,
-`github_person_token`, `host_code_ask` (328), `host_code_live` (327), `host_code_make`, `host_code_spend`, `host_code_try` (325; 328 with an invitation), `auth_invite_bind` (328), `instance_add_owner`, `instance_mail_clear`,
+`github_person_token`, `host_code_ask` (328), `host_code_live` (327), `host_code_live_for` (328), `host_code_make`, `host_code_spend`, `host_code_try` (325; 328 with an invitation), `auth_invite_bind` (328), `instance_add_owner`, `instance_mail_clear`,
 `instance_mail_write`, `instance_remove_owner`, `instance_setup_owner`,
 `nowhere_session_end`, `oauth_agent_link`, `oauth_code_make`,
 `oauth_code_take`, `oauth_refresh_take`, `oauth_token_bind`,

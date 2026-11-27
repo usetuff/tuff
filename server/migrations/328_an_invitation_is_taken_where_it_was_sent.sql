@@ -138,6 +138,22 @@ end $$;
 revoke execute on function host_code_ask(uuid, uuid, citext, text, text, text) from public;
 grant execute on function host_code_ask(uuid, uuid, citext, text, text, text) to tracker_auth;
 
+/*
+ * Whether this browser holds a live code for this address on this name for
+ * the same purpose — to sign in (no invitation) or beside this invitation.
+ * A live sign-in code says nothing about an invitation's: asking one first
+ * must not lift the limits on the other (the re-review of N3).
+ */
+create function host_code_live_for(p_domain uuid, p_email citext, p_browser text, p_invite_hash text) returns boolean
+language sql stable security definer set search_path = public, pg_temp as $$
+  select exists (select 1 from host_code c
+                 where c.domain_id = p_domain and c.email = p_email and c.browser = p_browser
+                   and c.invite_hash is not distinct from p_invite_hash
+                   and c.spent_at is null and c.expires_at > now())
+$$;
+revoke execute on function host_code_live_for(uuid, citext, text, text) from public;
+grant execute on function host_code_live_for(uuid, citext, text, text) to tracker_auth;
+
 /* 326's, as a sign-in's code: it clears an invitation's code it replaces. */
 create or replace function host_code_make(p_id uuid, p_domain uuid, p_email citext, p_browser text, p_code_hash text)
 returns uuid

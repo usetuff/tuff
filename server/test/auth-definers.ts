@@ -69,6 +69,7 @@ export const AUTH_DEFINERS = [
   /* 328: a code asked beside an invitation on a host. */
   'host_code_ask',
   'host_code_live',
+  'host_code_live_for',
   'host_code_make',
   'host_code_spend',
   'host_code_try',
