@@ -311,7 +311,7 @@ app.get(
         const hears = ctx.tokenId
           ? (e: { kind: string; payload: unknown }) => tokenHears(ctx, e)
           : ctx.host
-            ? (e: { kind: string; payload: unknown }) => hostHears(ctx, e)
+            ? async (e: { kind: string; payload: unknown }) => hostHears(ctx, e)
             : undefined
         void held.on(ws, `actor:${ctx.actorId}`, ctx.actorId, () => alive(ctx), hears)
         void here(ctx.actorId, ctx.workspaceId)

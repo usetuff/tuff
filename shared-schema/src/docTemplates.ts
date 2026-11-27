@@ -228,7 +228,9 @@ export function templateDoc(key: DocTemplate, language: 'en' | 'fr'): { name: st
  * words somebody reads, and changing one would break what it points at.
  */
 export function fillTemplate<T>(body: T, said: { date: string; project: string }): T {
-  const fill = (s: string) => s.replaceAll('{date}', said.date).replaceAll('{project}', said.project)
+  /* By a function: a project named `$&` or `$'` is its name, not the text
+     around the placeholder, which a replacement string would make it. */
+  const fill = (s: string) => s.replaceAll('{date}', () => said.date).replaceAll('{project}', () => said.project)
   const walk = (n: unknown, depth: number): unknown => {
     if (!n || typeof n !== 'object' || Array.isArray(n) || depth > 60) return n
     const node = n as Node

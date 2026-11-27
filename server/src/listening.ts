@@ -53,7 +53,7 @@ const HOMES = new Set(['task', 'post', 'file', 'message', 'conversation', 'proje
  * question of the database per word. Within its workspace it hears what
  * the person would — a host's session is the person there, not a token.
  */
-export async function hostHears(ctx: AuthContext, e: { kind: string; payload: unknown }): Promise<boolean> {
+export function hostHears(ctx: AuthContext, e: { kind: string; payload: unknown }): boolean {
   return ((e.payload ?? {}) as { workspace_id?: unknown }).workspace_id === ctx.workspaceId
 }
 

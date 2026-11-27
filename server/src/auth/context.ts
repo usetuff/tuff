@@ -231,15 +231,11 @@ async function feedbackProjectOf(actorId: string): Promise<string | null> {
  */
 export async function contextIn(ctx: AuthContext, workspaceId: string): Promise<AuthContext | null> {
   if (ctx.viaMcp || ctx.tokenProjectIds.length > 0) return null
-  /* A session made on a workspace's own domain is that workspace's and no
-     other's: never the same person somewhere else, and in its own still
-     bound to its host — or `NEVER_ON_A_HOST` fell away with the field
-     (the eighth audit). */
-  if (ctx.host) {
-    if (workspaceId !== ctx.workspaceId) return null
-    const here = await load(ctx.actorId, workspaceId, false, [])
-    return here ? { ...here, host: ctx.host } : null
-  }
+  /* Nor a session made on a workspace's own domain: it is that workspace's
+     and no other's, never the same person somewhere else — and a context
+     made fresh would drop its host, and `NEVER_ON_A_HOST` with it (the
+     eighth audit). Its own workspace it already is. */
+  if (ctx.host) return null
   return load(ctx.actorId, workspaceId, false, [])
 }
 

@@ -28,6 +28,8 @@ test('a template is the editor’s document, and its placeholders are filled in 
   /* An attribute is not words: a link's address is left alone. */
   const link = { type: 'text', text: '{date}', marks: [{ type: 'link', attrs: { href: 'https://x.com/{date}' } }] }
   assert.deepEqual(fillTemplate(link, { date: 'today', project: 'P' }), { ...link, text: 'today' })
+  /* A project named with `$` patterns is written as its name. */
+  assert.equal(fillTemplate('A {project} B', { date: 'd', project: "$& $` $' $$" }), "A $& $` $' $$ B")
   /* No text is left empty, which a document may not hold. */
   for (const key of DocTemplate.options) {
     for (const lang of ['en', 'fr'] as const) {

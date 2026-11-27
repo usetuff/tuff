@@ -202,10 +202,10 @@ test('a key that does not decode is not found, not an error', async () => {
 
 /* ----------------------------------------------------------- finding 4 */
 
-test('a session made on a workspace’s own domain hears on /ws/me only the words of its workspace', async () => {
+test('a session made on a workspace’s own domain hears on /ws/me only the words of its workspace', () => {
   const ctx = { workspaceId: 'w-1', host: 'projects.agency.example' } as AuthContext
-  assert.equal(await hostHears(ctx, { kind: 'message', payload: { conversation_id: 'c', workspace_id: 'w-1' } }), true)
-  assert.equal(await hostHears(ctx, { kind: 'notification', payload: { object_type: 'task', object_id: 't', workspace_id: 'w-2' } }), false)
-  assert.equal(await hostHears(ctx, { kind: 'read', payload: {} }), false)
-  assert.equal(await hostHears(ctx, { kind: 'read', payload: null }), false)
+  assert.equal(hostHears(ctx, { kind: 'message', payload: { conversation_id: 'c', workspace_id: 'w-1' } }), true)
+  assert.equal(hostHears(ctx, { kind: 'notification', payload: { object_type: 'task', object_id: 't', workspace_id: 'w-2' } }), false)
+  assert.equal(hostHears(ctx, { kind: 'read', payload: {} }), false)
+  assert.equal(hostHears(ctx, { kind: 'read', payload: null }), false)
 })
