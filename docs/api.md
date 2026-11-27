@@ -652,7 +652,7 @@ project and is not part of every one. `docs/specs/person-card.md`.
 
 | Method | Path | Action |
 | --- | --- | --- |
-| POST | `/api/me/avatar` | signed in; multipart, one image |
+| POST | `/api/me/avatar` | signed in; multipart, one image — a PNG, JPEG, GIF or WebP by its bytes, whatever type the form says, else `400 invalid` |
 | DELETE | `/api/me/avatar` | signed in; back to the letter |
 
 `image/*` only, two megabytes, `413` over that — the project icon's limits, so
@@ -733,7 +733,7 @@ switch is written to the activity log.
 | GET | `/api/workspaces` | the ones this person belongs to, each with its mark (`mark_icon`, `mark_tint`, `icon_url`) and `unread` — whether this person has an unread notification there that its bell would count, asked inside that workspace under its own policies, all of them in one transaction; a yes or no about their own notes and nothing else of it; absent through a token |
 | POST | `/api/workspaces` | `{ name, slug?, mark_icon?, mark_tint? }` — makes one with the caller as owner, answers a session for it plus its `slug`; a `slug` taken or not allowed is `409`; `403` through a token; `403 email_unverified` for an address nobody has proved (`workspace.create`); on a server of one's own with sign-up closed, `403 forbidden` to anybody who is not an instance owner (`can()` and `new_workspace`, migration 244) |
 | GET | `/api/workspaces/address?name=&want=` | `{ slug, free, suggestion }`: the address a name would get, or whether `want` is free and the nearest free one |
-| POST DELETE | `/api/workspace/icon` | `workspace.billing`; a picture (multipart `file`, 2 MB) in place of the workspace's mark |
+| POST DELETE | `/api/workspace/icon` | `workspace.billing`; a picture (multipart `file`, 2 MB; a PNG, JPEG, GIF or WebP by its bytes, else `400 invalid`) in place of the workspace's mark |
 | POST | `/api/workspaces/:id/enter` | a session for that one; the one it came from is kept — other tabs use it. Entering another workspace writes a `login` security event there, `meta.method: switch`; into any workspace but the session's own, `403 email_unverified` for an address nobody has proved (`workspace.enter`) |
 | GET | `/api/my/tasks` | mine, across every project but an archived one or the sample; `?tab=assigned` (default), `created`, `subscribed`, or `activity` (`activity.read`); each with its list's `icon`, `color` and `list_name`, and its project's `project_slug` |
 
@@ -1286,7 +1286,7 @@ setting; what was missing was any way to say so, or to stop.
 
 | Method | Path | Action |
 | --- | --- | --- |
-| POST | `/api/projects/:id/icon` | membership; multipart, one image |
+| POST | `/api/projects/:id/icon` | membership; multipart, one image — a PNG, JPEG, GIF or WebP by its bytes, else `400 invalid` |
 | DELETE | `/api/projects/:id/icon` | membership; back to the generated mark |
 
 `project.icon_key` is a storage key, not a url: the bytes live where every
@@ -3538,7 +3538,9 @@ into the data rather than two that can drift apart.
   on `workspace_id` before anything else is asked, then asked of what each
   is about — and one made for some projects only the words about them;
   "everything read" (`read` with no `id`) goes to sessions alone.
-  Not a workspace-wide
+  A session made on a workspace's own domain hears
+  only the words whose `workspace_id` is its workspace, "everything read"
+  among them. Not a workspace-wide
   subscription, which wakes every device for every change in every project.
 
 A browser cannot set a header on a websocket, so it opens one bare and
