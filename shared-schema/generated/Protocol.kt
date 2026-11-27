@@ -2454,6 +2454,7 @@ data class InviteRow (
 
 @Serializable
 data class InviteMade (
+    val host: String? = null,
     val id: String,
     val mailed: Boolean,
     val token: String
@@ -2655,6 +2656,9 @@ enum class Who(val value: String) {
 @Serializable
 data class MeWorkspace (
     val brand: Brand? = null,
+
+    @SerialName("domain_stopped")
+    val domainStopped: Boolean? = null,
 
     @SerialName("icon_url")
     val iconURL: String? = null,

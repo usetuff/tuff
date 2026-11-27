@@ -688,6 +688,10 @@ export const MeWorkspace = z.object({
   /** Where the workspace's own links point: its connected domain on a
       branded plan, else null for this server's own address. */
   origin: z.string().nullable().optional(),
+  /** To whoever may set the workspace's own domain, and only while it holds:
+      the domain stopped — paused, dropped or taken — and was neither
+      connected again nor removed. The dot on the way to Settings. */
+  domain_stopped: z.boolean().optional(),
 })
 export const Me = z.object({
   actor: MeActor,
@@ -1640,7 +1644,16 @@ export const InviteList = z.object({ invites: z.array(InviteRow) })
  * Empty rather than absent, so every client that decodes it as a string
  * still does.
  */
-export const InviteMade = z.object({ id: Uuid, token: z.string(), mailed: z.boolean() })
+export const InviteMade = z.object({
+  id: Uuid,
+  token: z.string(),
+  mailed: z.boolean(),
+  /** A link with no address, bound to the workspace's own domain before it
+      was shown: copied as `https://<host>/invite/<token>` and taken only
+      there. Absent
+      otherwise, and the link is this server's own address. */
+  host: z.string().optional(),
+})
 export type InviteMade = z.infer<typeof InviteMade>
 
 

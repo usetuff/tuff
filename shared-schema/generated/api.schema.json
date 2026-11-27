@@ -4468,6 +4468,9 @@
             "string",
             "null"
           ]
+        },
+        "domain_stopped": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -10445,6 +10448,9 @@
         },
         "mailed": {
           "type": "boolean"
+        },
+        "host": {
+          "type": "string"
         }
       },
       "required": [

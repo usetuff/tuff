@@ -105,6 +105,11 @@ export type Hosts = {
   /** Whether a name still opens this workspace: a session made on it is
       nobody anywhere once it does not. */
   answers(hostname: string, workspaceId: string): Promise<boolean>
+  /** Whether the workspace's own domain stopped without its owner pressing
+      anything — paused, dropped or taken — and is not yet connected again
+      or removed: the dot on the way to Settings. Read under the
+      policies. */
+  stopped(tx: Tx, workspaceId: string): Promise<boolean>
 }
 
 /** A loop the worker runs, waiting `every` milliseconds between runs. */

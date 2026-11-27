@@ -44,7 +44,7 @@ export const FOR_ANOTHER_ADDRESS = {
 
 /** Taken only on the workspace's own domain it was mailed to — migration 328. */
 export const ON_HOST = {
-  error: { code: 'invite_on_host', message: 'Accept this invitation from the link in its email.' },
+  error: { code: 'invite_on_host', message: 'Open the invitation’s link to accept it.' },
 } as const
 
 /**
@@ -226,6 +226,10 @@ invites.post('/invites', async (c) => {
       values (${uuidv7()}, ${ctx.workspaceId}, ${ctx.actorId}, 'invite_created',
               ${tx.json({ invite_id: id, role: body.data.role, ...(byHand ? { by_hand: true } : {}) } as never)})`,
   )
+  /* A link with no address, made while the workspace's own domain is
+     connected: bound there before its token is shown, and copied with that
+     address — taken only there, by the host's code. */
+  const host = body.data.email ? null : await bindLink(ctx, id, token)
 
   /*
    * An invitation with an address on it is sent there.
@@ -249,7 +253,7 @@ invites.post('/invites', async (c) => {
    * hold it too. Empty rather than absent: `token` is a string in every
    * client already decoding this answer.
    */
-  return c.json({ id, token: !body.data.email || byHand ? token : '', mailed })
+  return c.json({ id, token: !body.data.email || byHand ? token : '', mailed, ...(host ? { host } : {}) })
 })
 
 invites.post('/invites/:id/revoke', async (c) => {
@@ -383,7 +387,21 @@ invites.post('/invites/:id/resend', async (c) => {
     }
     return c.json({ id, token: '', mailed: true })
   }
-  return c.json({ id, token, mailed: false })
+  /* A link made new: bound to the domain when it is connected now, as a
+     first one is. Not bound for a fault, the old one is put back
+     and the new one stops, as for a letter that did not go. */
+  let host: string | null = null
+  if (!was.email) {
+    try {
+      host = await bindLink(ctx, id, token)
+    } catch (e) {
+      await withActor(ctx.actorId, ctx.workspaceId, async (tx) => {
+        await tx`update invite set deleted_at = null where id = ${old} and used_at is null`
+      })
+      throw e
+    }
+  }
+  return c.json({ id, token, mailed: false, ...(host ? { host } : {}) })
 })
 
 /**
@@ -434,6 +452,45 @@ async function delivered(id: string, token: string, email: string, how: 'by mail
 }
 
 /**
+ * Bound to the workspace's own domain by the sign-in role — `auth_invite_bind`,
+ * migration 328, which alone may write `mailed_domain` and asks that the
+ * domain is the invitation's workspace's and connected. Whether it was.
+ */
+async function bindTo(token: string, own: { id: string }): Promise<boolean> {
+  const [bound] = await asAuth((tx) => tx<{ ok: boolean }[]>`select auth_invite_bind(${hashToken(token)}, ${own.id}::uuid) as ok`)
+  return bound?.ok === true
+}
+
+/**
+ * A link with no address, bound before it is shown to the workspace's own
+ * domain where that is connected on a branded plan.
+ * Without the binding, whoever controls the
+ * domain's DNS reads every such link its clients open there, and could take
+ * it at usetuff.com for a full session; bound, it is taken only on the host,
+ * by the host's code, into a host's session.
+ *
+ * The domain is read from the row, never the request. The hostname it was
+ * bound to; null where there is no domain, or it stopped answering between
+ * the read and the binding — then the link is this server's, as links
+ * always were. A binding the database could not make revokes the
+ * invitation before the fault goes up, so no token the inviter believes
+ * bound is ever out unbound.
+ */
+async function bindLink(ctx: AuthContext, id: string, token: string): Promise<string | null> {
+  if (!edition.hosts) return null
+  const own = await withActor(ctx.actorId, ctx.workspaceId, (tx) => edition.hosts!.domainOf(tx, ctx.workspaceId))
+  if (!own) return null
+  try {
+    return (await bindTo(token, own)) ? own.hostname : null
+  } catch (e) {
+    await withActor(ctx.actorId, ctx.workspaceId, async (tx) => {
+      await tx`update invite set deleted_at = now() where id = ${id}`
+    })
+    throw e
+  }
+}
+
+/**
  * An invitation to an address, mailed there with its link — what sending
  * one and sending one again both do, once `mayMailInvite` has said yes.
  * Whether it went; once it has, the row says so (`delivered`).
@@ -480,10 +537,7 @@ async function mailInvite(
      token on its way to a name somebody else's DNS decides must be good
      only there. */
   if (own) {
-    const [bound] = await asAuth((tx) => tx<{ ok: boolean }[]>`select auth_invite_bind(${hashToken(token)}, ${own.id}::uuid) as ok`).catch(
-      () => [],
-    )
-    if (!bound?.ok) {
+    if (!(await bindTo(token, own).catch(() => false))) {
       console.error(`[invites] invitation ${inv.id} could not be bound to its workspace's domain: not sent`)
       return false
     }

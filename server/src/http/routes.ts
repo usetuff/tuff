@@ -817,6 +817,10 @@ app.get('/api/me', async (c) => {
           /* Where its own links point: its domain, when it has one on a
              branded plan. */
           origin: edition.hosts ? await edition.hosts.originOf(tx, ws.id) : null,
+          /* Its domain stopped — paused, dropped or taken — and nobody has
+             connected it again or removed it: a dot on the way to Settings,
+             for whoever may fix it and nobody else. */
+          ...(edition.hosts && allow(ctx, 'workspace.domain') && (await edition.hosts.stopped(tx, ws.id)) ? { domain_stopped: true } : {}),
         }
       : ws
     return { actor: actor ? faced(actor) : actor, workspace }

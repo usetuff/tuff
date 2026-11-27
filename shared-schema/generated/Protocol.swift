@@ -3326,11 +3326,13 @@ public enum API {
 
     // MARK: - InviteMade
     public struct InviteMade: Codable, Sendable {
+        public let host: String?
         public let id: String
         public let mailed: Bool
         public let token: String
 
-        public init(id: String, mailed: Bool, token: String) {
+        public init(host: String?, id: String, mailed: Bool, token: String) {
+            self.host = host
             self.id = id
             self.mailed = mailed
             self.token = token
@@ -3660,6 +3662,7 @@ public enum API {
     // MARK: - MeWorkspace
     public struct MeWorkspace: Codable, Sendable {
         public let brand: Brand?
+        public let domainStopped: Bool?
         public let iconURL: String?
         public let id: String
         public let markIcon: String?
@@ -3670,6 +3673,7 @@ public enum API {
 
         public enum CodingKeys: String, CodingKey {
             case brand
+            case domainStopped = "domain_stopped"
             case iconURL = "icon_url"
             case id
             case markIcon = "mark_icon"
@@ -3677,8 +3681,9 @@ public enum API {
             case name, origin, slug
         }
 
-        public init(brand: Brand?, iconURL: String?, id: String, markIcon: String?, markTint: Int?, name: String, origin: String?, slug: String) {
+        public init(brand: Brand?, domainStopped: Bool?, iconURL: String?, id: String, markIcon: String?, markTint: Int?, name: String, origin: String?, slug: String) {
             self.brand = brand
+            self.domainStopped = domainStopped
             self.iconURL = iconURL
             self.id = id
             self.markIcon = markIcon
