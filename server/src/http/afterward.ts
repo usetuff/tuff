@@ -25,6 +25,9 @@ import type { Context } from 'hono'
  * an answer that set one — linking a way in sets `__Host-tuff_link` — lost
  * the file cookie.
  *
+ * `@hono/node-server` 2 keeps an appended cookie (`afterward.test.ts` says
+ * so); this stays, being right on either adapter.
+ *
  * Not on an answer that may carry no body (101, 204, 205, 304): making one
  * of those again throws, and the next answer sets the cookie anyway.
  */

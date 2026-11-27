@@ -37,10 +37,12 @@ test('a cookie added after the answer reaches a GET with no Origin, behind cors'
   await new Promise((done) => server.once('listening', done))
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
   try {
-    /* The fault, kept in view: if this ever passes, the adapter changed and
-       the workaround may go. */
+    /* The fault this was kept for is gone: `@hono/node-server` 2 no longer
+       loses a cookie appended after the answer. `addCookies` stays — it is
+       right on either adapter — and this says so, so that a step back to
+       one that drops it fails here first. */
     const appended = await fetch(`${base}/appended/me`)
-    assert.equal(appended.headers.getSetCookie().length, 0)
+    assert.deepEqual(appended.headers.getSetCookie(), ['a=1; Path=/'])
 
     const added = await fetch(`${base}/added/me`)
     assert.equal(added.status, 200)
