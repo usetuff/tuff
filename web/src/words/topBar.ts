@@ -21,6 +21,8 @@ export const TOP_BAR = say({
   /* The dot on a workspace's mark. */
   newElsewhere: ['New notifications in another workspace', 'Nouvelles notifications dans un autre espace de travail'],
   newThere: ['New notifications', 'Nouvelles notifications'],
+  /* The red dot of a workspace's own domain that stopped. */
+  domainStopped: ['Your domain stopped working', 'Votre domaine ne fonctionne plus'],
   yourAccount: ['Your account', 'Votre compte'],
   active: ['Active', 'Actif'],
   away: ['Away', 'Absent'],

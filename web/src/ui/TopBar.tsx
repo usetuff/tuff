@@ -606,8 +606,10 @@ export function WorkspaceMenu({
   /** Whether this person may make a workspace — `workspace.create`, which a
       server of one's own with sign-up closed keeps to its owners. */
   mayMake?: boolean
-  /** Its mark. */
-  look?: Omit<WorkspaceLook, 'id' | 'name'> | undefined
+  /** Its mark. And, from `/api/me` as it
+      came, whether its own domain stopped: a red dot on the mark and on the
+      settings row, to whoever may fix it. */
+  look?: (Omit<WorkspaceLook, 'id' | 'name'> & { domain_stopped?: boolean | undefined }) | undefined
   /** Whether the column below is narrowed to its glyphs, which moves what
       this has to line up with — `docs/specs/collapsed-sidebar.md`. */
   shut: boolean
@@ -635,6 +637,8 @@ export function WorkspaceMenu({
   /* Something waiting for this person in another workspace: the dot on
      the mark. */
   const elsewhere = waitingElsewhere(all, id)
+  /* Its own domain stopped, and the settings that fix it are a door here. */
+  const stopped = Boolean(look?.domain_stopped && onSettings)
   /*
    * Opened whole.
    *
@@ -744,8 +748,8 @@ export function WorkspaceMenu({
         {/* With a dot when another workspace has something for this
             person. Over the mark's corner, so
             the name beside it never moves for it. */}
-        <MarkWithDot look={{ id, name, ...look }} size={18} waiting={elsewhere} ground={ground} />
-        {elsewhere && <span className="sr-only">{W.newElsewhere}</span>}
+        <MarkWithDot look={{ id, name, ...look }} size={18} waiting={elsewhere} alarm={stopped} ground={ground} />
+        {stopped ? <span className="sr-only">{W.domainStopped}</span> : elsewhere && <span className="sr-only">{W.newElsewhere}</span>}
         {/* The chevron belongs to the name — four from it, where the mark
             keeps twelve. Twelve on both sides left it adrift between the
             name and nothing. */}
@@ -836,6 +840,14 @@ export function WorkspaceMenu({
                   <Icon name="gear" size={14} />
                 </span>
                 <span className="truncate">{W.workspaceSettings}</span>
+                {stopped && (
+                  <span
+                    data-testid="domain-stopped-dot"
+                    role="img"
+                    aria-label={W.domainStopped}
+                    className="inline-block size-2 shrink-0 rounded-full bg-danger"
+                  />
+                )}
                 {(() => {
                   const here = all.find((w) => w.id === id)
                   const said = here && edition.planOf?.(here)

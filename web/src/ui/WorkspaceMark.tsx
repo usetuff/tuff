@@ -74,12 +74,16 @@ export function MarkWithDot({
   look,
   size = 16,
   waiting,
+  alarm = false,
   ground = 'var(--canvas)',
   testId = 'workspace-waiting',
 }: {
   look: WorkspaceLook
   size?: number
   waiting: boolean
+  /** Something about this workspace its owner must fix — its own domain
+      stopped: the same dot in red, in place of the other. */
+  alarm?: boolean
   /** What the mark is drawn on, for the ring that cuts the dot out of it. */
   ground?: string
   testId?: string
@@ -87,11 +91,11 @@ export function MarkWithDot({
   return (
     <span className="relative flex shrink-0" style={{ width: size, height: size }}>
       <WorkspaceMark look={look} size={size} />
-      {waiting && (
+      {(waiting || alarm) && (
         <span
-          data-testid={testId}
+          data-testid={alarm ? 'workspace-alarm' : testId}
           aria-hidden
-          className="pointer-events-none absolute rounded-full bg-accent"
+          className={`pointer-events-none absolute rounded-full ${alarm ? 'bg-danger' : 'bg-accent'}`}
           style={{ top: -4, right: -4, width: 8, height: 8, boxShadow: `0 0 0 2px ${ground}` }}
         />
       )}

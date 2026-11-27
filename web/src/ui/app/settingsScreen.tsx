@@ -75,7 +75,7 @@ export function settingsScreen({
                 {me.can.includes('workspace.billing') && (
                   <>
                     <Identity key={me.workspace.id} look={me.workspace} onChanged={load} />
-                    {edition.Domain && me.can.includes('workspace.domain') && <edition.Domain look={me.workspace} />}
+                    {edition.Domain && me.can.includes('workspace.domain') && <edition.Domain look={me.workspace} onChanged={load} />}
                     {edition.Plan && <edition.Plan />}
                     <Switches
                       settings={me.settings as Record<string, string>}

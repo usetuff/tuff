@@ -27,6 +27,9 @@ export type Me = {
     icon_url?: string | null
     /** Its own name and mark, worn in Tuff's place. */
     brand?: Brand | null
+    /** Its own domain stopped and is not yet connected again or removed —
+        to whoever may fix it; the dot on the way to Settings. */
+    domain_stopped?: boolean
   }
   role: 'owner' | 'member'
   settings: Record<string, string>

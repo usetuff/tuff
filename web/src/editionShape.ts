@@ -54,7 +54,12 @@ export type WebEdition = {
   /** The workspace's plan, in its settings. */
   Plan: ComponentType | null
   /** The workspace's own domain, in its settings, for its owner. */
-  Domain: ComponentType<{ look: { id: string; brand?: import('@tracker/shared-schema').Brand | null | undefined } }> | null
+  Domain: ComponentType<{
+    look: { id: string; brand?: import('@tracker/shared-schema').Brand | null | undefined }
+    /** What it shows changed what `/api/me` says — a domain that stopped,
+        connected again or removed — so the dot on Settings is asked again. */
+    onChanged?: () => void
+  }> | null
   /** The settings' lines that say more where there are plans: what a new owner takes on, and that deleting cancels what is paid for. */
   settingsSays: { newOwnerTakes: string; paidCancelled: string } | null
   /** What a provider's sign-in came back saying that only the service says, or null. */
