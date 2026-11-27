@@ -23,3 +23,6 @@ export const CATALOG = '/.well-known/api-catalog'
 /** The agent-skills discovery index, and the one skill in it. */
 export const SKILLS = '/.well-known/agent-skills/index.json'
 export const SKILL = '/.well-known/agent-skills/tuff/SKILL.md'
+/** Agentic Resource Discovery's manifest, and the name it had before. */
+export const ARD = '/.well-known/ard.json'
+export const ARD_BEFORE = '/.well-known/ai-catalog.json'

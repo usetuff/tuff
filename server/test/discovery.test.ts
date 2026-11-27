@@ -99,7 +99,13 @@ test('in production every address said is APP_URL, whatever Host the request nam
   env.appUrl = 'https://tuff.example.com'
   try {
     const hostile = { host: 'attacker.example', 'x-forwarded-proto': 'https', 'x-forwarded-host': 'attacker.example' }
-    for (const path of ['/.well-known/api-catalog', '/.well-known/agent-skills/index.json', '/.well-known/agent-skills/tuff/SKILL.md']) {
+    for (const path of [
+      '/.well-known/api-catalog',
+      '/.well-known/agent-skills/index.json',
+      '/.well-known/agent-skills/tuff/SKILL.md',
+      '/.well-known/ard.json',
+      '/.well-known/ai-catalog.json',
+    ]) {
       const said = await (await app.request(`http://attacker.example${path}`, { headers: hostile })).text()
       assert.doesNotMatch(said, /attacker/, path)
       assert.match(said, /https:\/\/tuff\.example\.com\/mcp/, path)
@@ -107,5 +113,36 @@ test('in production every address said is APP_URL, whatever Host the request nam
   } finally {
     process.env.NODE_ENV = was.node
     env.appUrl = was.appUrl
+  }
+})
+
+/*
+ * Agentic Resource Discovery's manifest, as its schema (v0.91) and
+ * Lighthouse's check of it ask: entries, each with an identifier of the
+ * `urn:air:<domain>:…` form, a name, a media type and exactly one of `url`
+ * or `data`, and two to five queries it answers. At its old name too,
+ * which Lighthouse still asks for and which answered the app's page.
+ */
+test('the ARD manifest names the MCP server and the skill, at both its names', async () => {
+  const URN =
+    /^urn:air:[a-zA-Z0-9.-]+:(?:[a-zA-Z0-9._~!$&'()*+,;=@/-]|%[0-9a-fA-F]{2})+(:(?:[a-zA-Z0-9._~!$&'()*+,;=@/-]|%[0-9a-fA-F]{2})+)?$/
+  for (const path of ['/.well-known/ard.json', '/.well-known/ai-catalog.json']) {
+    const res = await app.request(path)
+    assert.equal(res.status, 200, path)
+    assert.match(res.headers.get('content-type') ?? '', /^application\/json/, path)
+    const { entries } = (await res.json()) as {
+      entries: { identifier: string; displayName: string; type: string; url?: string; data?: object; representativeQueries: string[] }[]
+    }
+    assert.equal(entries.length, 2, path)
+    for (const e of entries) {
+      assert.match(e.identifier, URN, e.identifier)
+      assert.ok(e.displayName, e.identifier)
+      assert.ok((e.url === undefined) !== (e.data === undefined), `${e.identifier}: exactly one of url or data`)
+      assert.ok(e.representativeQueries.length >= 2 && e.representativeQueries.length <= 5, e.identifier)
+    }
+    const mcp = entries.find((e) => e.type === 'application/mcp-server-card+json')!
+    assert.match((mcp.data as { url: string }).url, /\/mcp$/)
+    const skills = entries.find((e) => e.type === 'application/agent-skills+json')!
+    assert.match(skills.url!, /\/\.well-known\/agent-skills\/index\.json$/)
   }
 })
