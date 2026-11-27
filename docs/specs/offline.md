@@ -29,7 +29,10 @@ fetched from the network first, every time — a deploy is seen on the next
 load — and the kept copy is used only when the network does not answer
 within four seconds. A bundle never changes under its name, so the kept
 one is the file. What the old build had that the new one does not is
-deleted, so one version of the app is kept, not every one.
+deleted, so one version of the app is kept, not every one. The worker is
+registered only where the app is drawn: keeping every file of the build
+from the landing would download the app for a reader of the site, so a
+page of the site with no session lets go of one registered before.
 `/api`, `/auth` and the socket are never touched by the worker.
 
 **The answers.** `remember()` also writes to IndexedDB, a second after the

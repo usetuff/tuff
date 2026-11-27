@@ -136,9 +136,23 @@ createRoot(rootEl).render(
  * The worker that keeps the app's own files, so a window opened with no
  * connection is the app — `docs/specs/offline.md`. Built copies only: under
  * the dev server the files are not hashed and change on every save.
+ *
+ * And only where the app is drawn. The worker keeps every file of the
+ * build, the app's among them, and registered from the landing it fetched
+ * all of it in the background for somebody reading a page of the site —
+ * the download the landing stopped making, made anyway, and competing with
+ * the page's own files on a phone's connection.
  */
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+if (import.meta.env.PROD && app && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+} else if (import.meta.env.PROD && !app && !stored() && 'serviceWorker' in navigator) {
+  /* A worker registered from the landing before this, for somebody with no
+     session — who has no app to keep and nothing to be told: let go of it,
+     or its next update fetches the whole build for a reader of the site. */
+  navigator.serviceWorker
+    .getRegistration('/')
+    .then((reg) => reg?.unregister())
+    .catch(() => {})
 }
 
 /*
