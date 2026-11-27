@@ -632,6 +632,9 @@ export const NEVER_ON_A_HOST: readonly Action[] = [
   'workspace.create', 'workspace.enter', 'workspace.confirm', 'workspace.leave',
   'workspace.billing', 'workspace.transfer', 'workspace.delete', 'workspace.domain',
   'token.issue.own', 'token.revoke.any', 'agent.connect', 'agent.manage',
+  /* And an agent disconnected, or a connection made as it ended: as
+     lasting as connecting one, and somebody else's work stopped. */
+  'agent.remove',
   /* People let in or given a role, and what sends the workspace's work out
      of it — webhooks, Slack, GitHub (behind `audit.read`), a room's
      incoming hooks, a public feedback page: each outlives the session. A

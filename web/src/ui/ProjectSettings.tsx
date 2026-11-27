@@ -4,6 +4,7 @@ import { FeedbackSettings } from './FeedbackSettings.jsx'
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import { InviteDialog } from './InviteDialog.jsx'
 import { pictureFor } from '../data/picture.js'
+import { onHost } from '../data/host.js'
 import { FACTS, HEADS, MAKE, MORE, PROJECT, SAYS, now } from '../data/words.js'
 import { PROJECT_SETTINGS as W } from '../words/projectSettings.js'
 import type { FeedbackSettings as FeedbackSettingsRead, PersonInProject, PersonInWorkspace } from '@tracker/shared-schema'
@@ -228,6 +229,11 @@ export function ProjectSettings({
 
   const mayManage = runsIt
   const mayTools = runsIt
+  /* Linking a GitHub repository or a Slack channel sends the work out, and
+     a session made on a workspace's own domain is refused it, as it is
+     the person's own repositories — so on a host the links are read, not
+     chosen. */
+  const mayLinkOut = mayTools && !onHost()
   const mayStaff = can.includes('project.member.add')
   /* Taking somebody off is running the project, not adding to it — the
      server's `project.member.remove`, read rather than guessed at. */
@@ -525,10 +531,10 @@ export function ProjectSettings({
         {/* Its repository on GitHub. Not for a
             sample, which anybody on it deletes for good in one press: the
             server refuses it one. */}
-        {tools.includes('tasks') && !project.sample && <ProjectGithub projectId={project.id} may={mayTools} />}
+        {tools.includes('tasks') && !project.sample && <ProjectGithub projectId={project.id} may={mayLinkOut} />}
 
         {/* The Slack channel it posts its news to. */}
-        <ProjectSlack projectId={project.id} may={mayTools} />
+        <ProjectSlack projectId={project.id} may={mayLinkOut} />
 
         {/* Its channels nobody is in any more, to end. */}
         {tools.includes('messages') && <EmptyChannels projectId={project.id} projectName={project.name} />}

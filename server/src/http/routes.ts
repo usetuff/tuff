@@ -672,9 +672,11 @@ app.use('/api/*', async (c, next) => {
   await bounded(ctx, next)
 })
 
-/* What belongs to the account, never to a session made on a host. */
+/* What belongs to the account, never to a session made on a host — the
+   person's GitHub repositories, read with their own token, and an AppSumo
+   code, which moves money, among it (the eighth audit). */
 const ACCOUNT_ONLY =
-  /^\/api\/(me\/(password|email|inbox-code|ways-in|delete|export|invitations|unconfirmed)|github\/me|2fa|sessions|oauth\/authorize|invite|push)(\/|$)/
+  /^\/api\/(me\/(password|email|inbox-code|ways-in|delete|export|invitations|unconfirmed)|github\/(me|repos)|2fa|sessions|oauth\/authorize|invite|push|appsumo)(\/|$)/
 /* And, from a project, a link that sends its work out of the workspace — a
    Slack channel, a GitHub repository — made or taken away. */
 const SENT_OUT = /^\/api\/projects\/[^/]+\/(slack|github)$/
