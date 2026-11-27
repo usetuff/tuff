@@ -9,7 +9,7 @@ import { type Invitation, type Project } from './model.js'
 import { reachOf, NoAgents, AgentPage } from '../Agents.jsx'
 import { readAgentWork } from '../AgentWeek.jsx'
 import { AGENTS } from '../../words/agents.js'
-import { readPerson } from '../Stats.jsx'
+import { readPerson, warmPerson } from '../Stats.jsx'
 import { PageTitle, Fluid, Avatar, Empty, GroupLabel, findField } from '../kit.jsx'
 import { Icon } from '../glyphs.jsx'
 import { Person } from './person.jsx'
@@ -165,7 +165,11 @@ export function membersScreen({
                      is linking to them rather than to the list they are in. */
                   data-selected={(beneath.view === 'members' && beneath.actorId === p.actor_id) || undefined}
                   onClick={() => navigate({ view: 'members', actorId: p.actor_id })}
-                  /* Read ahead under the pointer, so the page opens whole. */
+                  /* Read ahead under the pointer, so the page opens whole —
+                     and the first few before anybody points (`warmPerson`). */
+                  ref={(el) => {
+                    if (el) warmPerson(p.actor_id)
+                  }}
                   onPointerEnter={() => void readPerson(p.actor_id).catch(() => {})}
                   className="flex w-full shrink-0 items-center gap-3 rounded-[var(--r-row)] px-2 text-left"
                   style={{

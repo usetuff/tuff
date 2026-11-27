@@ -60,6 +60,36 @@ export function readPerson(id: string, fresh = false): Promise<PersonRead> {
   reading.set(id, { at: Date.now(), read })
   return read
 }
+/*
+ * Read ahead before anybody points: the first names in the roster, one at
+ * a time while nothing else is happening, so the first person opened —
+ * on a phone, where nothing hovers, or by a click quicker than the answer
+ * — opens whole instead of on an empty panel for a round trip. A few,
+ * once each: a roster of a thousand is not a thousand requests.
+ */
+const warmed = new Set<string>()
+const queue: string[] = []
+let warming = false
+export function warmPerson(id: string): void {
+  if (warmed.has(id) || warmed.size >= 12) return
+  warmed.add(id)
+  queue.push(id)
+  if (!warming) next()
+}
+function next(): void {
+  const id = queue.shift()
+  if (!id) {
+    warming = false
+    return
+  }
+  warming = true
+  const go = () =>
+    void readPerson(id)
+      .catch(() => {})
+      .finally(next)
+  if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 2000 })
+  else setTimeout(go, 200)
+}
 function readPersonNow(id: string): Promise<PersonRead> {
   return api<{
     projects: { id: string; name: string }[]
